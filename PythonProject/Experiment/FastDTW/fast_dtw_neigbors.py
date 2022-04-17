@@ -18,14 +18,16 @@ def get_haversine(point_a, point_b):
     return EARTH_RADIUS * c
 
 
+def euc_dist(p1, p2):
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
+
 def get_distance(p1, p2):
     return abs(p1[1] - p2[1])
 
 
 def get_fastdtw(traj1, traj2):
-    # traj1[:, 0] = np.array(len(traj1))
-    # traj2[:, 0] = np.array(len(traj2))
-    distance, path = fastdtw(traj1, traj2, dist=get_distance)
+    distance, path = fastdtw(traj1, traj2, dist=euc_dist)
     return distance
     # print("" + str(distance / 1000000))  # km
 
