@@ -3,7 +3,7 @@ import numpy as np
 import time
 import math
 import Experiment.compare_result.compare as cr
-import Experiment.src.trajectory_graph as tg
+import Experiment.Test.trajectory_graph as tg
 import pandas as pd
 import scipy.stats as stats
 from sklearn.preprocessing import MinMaxScaler

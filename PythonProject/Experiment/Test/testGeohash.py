@@ -2,7 +2,7 @@ import math
 import scipy.stats as stats
 import numpy as np
 import Experiment.FastDTW.fast_dtw_neigbors as dtw
-import Experiment.src.geo_hash as gh
+import Experiment.Test.geo_hash as gh
 import pandas as pd
 
 if __name__ == '__main__':
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     print('Exact coordinate for Geohash ' + res + ' :\n',
           gh.decode_exactly(res, latitude_min, latitude_max, longitude_min, longitude_max))
 
-    res = gh.encode(40.0117,116.6064, latitude_min, latitude_max, longitude_min, longitude_max, precision=6)
+    res = gh.encode(40.0117, 116.6064, latitude_min, latitude_max, longitude_min, longitude_max, precision=6)
     print('Geohash for 40.0117,116.6064:', res)
     print('Exact coordinate for Geohash ' + res + ' :\n',
           gh.decode_exactly(res, latitude_min, latitude_max, longitude_min, longitude_max))

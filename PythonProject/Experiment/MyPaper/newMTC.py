@@ -1,10 +1,8 @@
+import math
+import time
 import pandas as pd
 import numpy as np
-import time
-import math
 import Experiment.compare_result.compare as cr
-import Experiment.Test.trajectory_graph as tg
-import pandas as pd
 
 
 # 加载数据集
@@ -16,16 +14,7 @@ def gps_reader(filename):
     return points
 
 
-def get_ped(s, m, e):
-    a = e[2] - s[2]
-    b = s[1] - e[1]
-    c = e[1] * s[2] - s[1] * e[2]
-    if a == 0 and b == 0:
-        return 0
-    short_dist = abs((a * m[1] + b * m[2] + c) / math.sqrt(a * a + b * b))
-    return short_dist
-
-
+# 获取时间同步距离
 def get_sed(s, m, e):
     numerator = m[0] - s[0]
     denominator = e[0] - s[0]
@@ -39,28 +28,7 @@ def get_sed(s, m, e):
     return math.sqrt(lat_diff * lat_diff + lon_diff * lon_diff)
 
 
-# dp
-def douglas_peucker(points, start, last, epsilon):
-    d_max = 0
-    index = start
-    rec_result = []
-    for i in range(start + 1, last):
-        d = get_ped(points[start], points[i], points[last])
-        if d > d_max:
-            index = i
-            d_max = d
-    if d_max > epsilon:
-        rec_result1 = douglas_peucker(points, start, index, epsilon)
-        rec_result2 = douglas_peucker(points, index, last, epsilon)
-        rec_result.extend(rec_result1)
-        rec_result.extend(rec_result2[1:])
-    else:
-        rec_result.append(start)
-        rec_result.append(last)
-    return rec_result
-
-
-# TD-TR
+# TD-TR算法
 def td_tr(points, start, last, epsilon):
     d_max = 0
     index = start
@@ -82,17 +50,43 @@ def td_tr(points, start, last, epsilon):
     return rec_result
 
 
+# 用粗粒度位图得到的（8*8）64位表示该轨迹
+# （即使是超出 经纬度范围 也可以用这个  因为这个是存储的大多周期性轨迹常经过的位置）
+def grid_bitmap(trajectory, lat_min, lat_max, lon_min, lon_max):
+    lat_range = np.linspace(lat_min, lat_max, 8)
+    lon_range = np.linspace(lon_min, lon_max, 8)
+    diff_lat = (lat_max - lat_min) / 8
+    diff_lon = (lon_max - lon_min) / 8
+    # 初始化位图
+    bitmap = np.zeros((8, 8))
+    for point in trajectory:
+        # floor((lat-lat_min)/diff_lat)  and  floor((lon-lon_min)/diff_lon)
+        i = math.floor((point[1] - lat_min) / diff_lat)
+        j = math.floor((point[2] - lon_min) / diff_lon)
+        bitmap[i, j] = 1
+
+
 if __name__ == '__main__':
     filename = "10.9.csv"
     epsilon = 0.01  # 0.0001
     save_filename = "result.csv"
     points = gps_reader(filename)
+
+    # STC -  td-tr 算法压缩
     start_time = time.perf_counter()
-    sample_index = douglas_peucker(points, 0, len(points) - 1, epsilon)
+    sample_index = td_tr(points, 0, len(points) - 1, epsilon)
     sample = []
     for e in sample_index:
         sample.append(points[e])
     end_time = time.perf_counter()
+
+    # 找到轨迹经纬度上下限   并取上界和下界
+    sample = np.array(sample)
+    latitude_min = math.floor(np.array(sample[:, 1]).min())
+    latitude_max = math.ceil(np.array(sample[:, 1]).max())
+    longitude_min = math.floor(np.array(sample[:, 2]).min())
+    longitude_max = math.ceil(np.array(sample[:, 2]).max())
+
     print("DP-TR")
     print("dataset:" + str(filename))
     cr.get_CR_and_time(save_filename, start_time, end_time, points, sample)
@@ -100,5 +94,3 @@ if __name__ == '__main__':
     print("SED距离误差：" + str(cr.get_SED_error(points, sample)))
     print("Angle角度误差：" + str(cr.get_angle_error2(points, sample)))
     cr.get_dtw(points, sample)
-    # tg.get_two_line_chart(pd.DataFrame(points, columns=['time', 'longitude', 'latitude']),
-    #                       pd.DataFrame(sample, columns=['time', 'longitude', 'latitude']))
