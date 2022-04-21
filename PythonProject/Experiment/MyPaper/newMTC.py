@@ -50,47 +50,92 @@ def td_tr(points, start, last, epsilon):
     return rec_result
 
 
-# 用粗粒度位图得到的（8*8）64位表示该轨迹
+# __base32 = '0123456789bcdefghjkmnpqrstuvwxyz'
+# __decodemap = {}
+# for i in range(len(__base32)):
+#     __decodemap[__base32[i]] = i
+
+
+# 用粗粒度位图得到的能够粗略表示该轨迹的整数
 # （即使是超出 经纬度范围 也可以用这个  因为这个是存储的大多周期性轨迹常经过的位置）
-def grid_bitmap(trajectory, lat_min, lat_max, lon_min, lon_max):
-    lat_range = np.linspace(lat_min, lat_max, 8)
-    lon_range = np.linspace(lon_min, lon_max, 8)
-    diff_lat = (lat_max - lat_min) / 8
-    diff_lon = (lon_max - lon_min) / 8
-    # 初始化位图
-    bitmap = np.zeros((8, 8))
+def grid_bitmap(trajectory, lat_min, lat_max, lon_min, lon_max, row=10, col=10):
+    diff_lat = (lat_max - lat_min) / row
+    diff_lon = (lon_max - lon_min) / col
+    # 初始化位图   横8纵8
+    bitmap = np.zeros((row, col))
+    # 是均等分还是 根据 GeoHash 交叉分 ? 均等分能够尽可能地保留原始轨迹曲线
+    # 位图中进行位置标记
+
+    # 先直接用整数存  因为python的整数无限容量
+    geohash = 0
     for point in trajectory:
         # floor((lat-lat_min)/diff_lat)  and  floor((lon-lon_min)/diff_lon)
         i = math.floor((point[1] - lat_min) / diff_lat)
         j = math.floor((point[2] - lon_min) / diff_lon)
         bitmap[i, j] = 1
 
+        # 0000 0000
+        # 1000 0000
+        # => 1000 0000 0000 0000
+        geohash += (1 << (i * row + col - 1 - j))
+    return geohash
+
+
+latitude_min = 90
+latitude_max = -90
+longitude_min = 180
+longitude_max = -180
+
+
+# 获取轨迹经纬度的范围
+def set_range(points):
+    points = np.array(points)
+    # 找到轨迹经纬度上下限   并对上限取上界  对下限取下界
+    global latitude_min, latitude_max, longitude_min, longitude_max
+    latitude_min = math.floor(np.array(points[:, 1]).min())
+    latitude_max = math.ceil(np.array(points[:, 1]).max())
+    longitude_min = math.floor(np.array(points[:, 2]).min())
+    longitude_max = math.ceil(np.array(points[:, 2]).max())
+
+
+def run_mtc():
+    ...
+
 
 if __name__ == '__main__':
     filename = "10.9.csv"
-    epsilon = 0.01  # 0.0001
+    epsilon = 0.001
     save_filename = "result.csv"
     points = gps_reader(filename)
+    # 一、设置经纬度上下限
+    set_range(points)
 
-    # STC -  td-tr 算法压缩
+    # 二、STC -  td-tr 算法压缩
     start_time = time.perf_counter()
     sample_index = td_tr(points, 0, len(points) - 1, epsilon)
     sample = []
     for e in sample_index:
         sample.append(points[e])
     end_time = time.perf_counter()
-
-    # 找到轨迹经纬度上下限   并取上界和下界
     sample = np.array(sample)
-    latitude_min = math.floor(np.array(sample[:, 1]).min())
-    latitude_max = math.ceil(np.array(sample[:, 1]).max())
-    longitude_min = math.floor(np.array(sample[:, 2]).min())
-    longitude_max = math.ceil(np.array(sample[:, 2]).max())
 
-    print("DP-TR")
-    print("dataset:" + str(filename))
-    cr.get_CR_and_time(save_filename, start_time, end_time, points, sample)
-    print("PED距离误差：" + str(cr.get_PED_error(points, sample)))
-    print("SED距离误差：" + str(cr.get_SED_error(points, sample)))
-    print("Angle角度误差：" + str(cr.get_angle_error2(points, sample)))
-    cr.get_dtw(points, sample)
+    # # 三、对当前轨迹进行相似轨迹粗粒度搜寻 然后MTC压缩
+    # print("DP-TR")
+    # print("dataset:" + str(filename))
+    # cr.get_CR_and_time(save_filename, start_time, end_time, points, sample)
+    # print("PED距离误差：" + str(cr.get_PED_error(points, sample)))
+    # print("SED距离误差：" + str(cr.get_SED_error(points, sample)))
+    # print("Angle角度误差：" + str(cr.get_angle_error2(points, sample)))
+    # # cr.get_dtw(points, sample)
+    gb1 = grid_bitmap(points, latitude_min, latitude_max, longitude_min, longitude_max)
+    print(gb1)
+    # # 简化后的与简化前的有一些不同  可能是中间有些点被忽略   可以通过差值把忽略的格子给设置为1
+    # gb1 = grid_bitmap(sample, latitude_min, latitude_max, longitude_min, longitude_max)
+    # print(gb1)
+    # points = gps_reader("10.10.csv")
+    # gb2 = grid_bitmap(points, latitude_min, latitude_max, longitude_min, longitude_max)
+    # points = gps_reader("10.11.csv")
+    # gb3 = grid_bitmap(points, latitude_min, latitude_max, longitude_min, longitude_max)
+    # 1908598440434674518018754863244
+    # 5076797241849641349311480676534
+    # 6026915919326921468891933950092
