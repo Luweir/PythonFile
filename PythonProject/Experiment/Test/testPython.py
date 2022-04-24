@@ -13,3 +13,10 @@ if __name__ == '__main__':
     print(b)
     print(format(b, 'b'))
     print(1 << (5 * 8 + 8 - 1 - 0))
+    print("-------------------------------------")
+    map = {}
+    map[1] = 123123123123
+    map[2] = 123123
+    print(map.keys())
+    print(map.values())
+    print(map[1] == 123123123123)

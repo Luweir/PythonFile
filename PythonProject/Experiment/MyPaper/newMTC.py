@@ -98,9 +98,53 @@ def set_range(points):
     longitude_max = math.ceil(np.array(points[:, 2]).max())
 
 
-def run_mtc():
+# 统计geoHash 匹配1的个数
+def match(cur_trajectoryHash, conf_trajectoryHash):
+    return 1
+
+
+def check_in(cur_point, left_point, right_point):
+    flag1 = False
+    flag2 = False
+    if left_point[1] >= cur_point[1] >= right_point[1] or left_point[1] <= cur_point[1] <= right_point[1]:
+        flag1 = True
+    if left_point[2] >= cur_point[2] >= right_point[2] or left_point[2] <= cur_point[2] <= right_point[2]:
+        flag1 = True
+    return flag1 and flag2
+
+
+# 多轨迹压缩 运行
+def run_mtc(trajectory, refe_trajectory):
+    # 搜索找到最相似的轨迹
+    # similar_id = -1
+    # most_match = 0
+    # for trajectory_id in trajectory_hash.keys():
+    #     cur_match = match(cur_trajectoryHash, trajectory_hash[trajectory_id])
+    #     if cur_match > most_match:
+    #         similar_id = trajectory_id
+    #         most_match = cur_match
+
+    # 多项式拟合  得到对应 (t,t') (p,p')
+    for i in range(len(trajectory)):
+        cur_point = trajectory[i]
+        ref_point = []
+        for j in range(len(refe_trajectory) - 1):
+            # 找到经过 cur_point 的位置
+            if check_in(cur_point, refe_trajectory[j], refe_trajectory[j + 1]):
+                # 进行多项式拟合
+                trajectory_seg = refe_trajectory[j - 2 if j >= 0 else 0:j + 3 if j + 3 < len(refe_trajectory) else len(
+                    refe_trajectory) - 1]
+                trajectory_seg = np.array(trajectory_seg)
+                z1 = np.polyfit(trajectory_seg[:, 0], trajectory_seg[:, 1], 2)  # 用n次多项式拟合，可改变多项式阶数；
+                p1 = np.poly1d(z1)  # 得到多项式系数，按照阶数从高到低排列
+                
     ...
 
+
+# ID trajectoryHash
+trajectory_hash = {}
+# ID trajectory
+trajectories = {}
 
 if __name__ == '__main__':
     filename = "10.9.csv"
@@ -108,16 +152,16 @@ if __name__ == '__main__':
     save_filename = "result.csv"
     points = gps_reader(filename)
     # 一、设置经纬度上下限
-    set_range(points)
+    # set_range(points)
 
     # 二、STC -  td-tr 算法压缩
     start_time = time.perf_counter()
-    sample_index = td_tr(points, 0, len(points) - 1, epsilon)
-    sample = []
-    for e in sample_index:
-        sample.append(points[e])
+    # sample_index = td_tr(points, 0, len(points) - 1, epsilon)
+    # sample = []
+    # for e in sample_index:
+    #     sample.append(points[e])
     end_time = time.perf_counter()
-    sample = np.array(sample)
+    # sample = np.array(sample)
 
     # # 三、对当前轨迹进行相似轨迹粗粒度搜寻 然后MTC压缩
     # print("DP-TR")
