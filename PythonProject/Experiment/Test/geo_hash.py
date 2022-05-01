@@ -81,7 +81,7 @@ def encode(latitude, longitude, lat_min, lat_max, lon_min, lon_max, precision=12
     Encode a position given in float arguments latitude, longitude to
     a geohash which will have the character count precision.
     """
-    print(lat_min, lat_max, lon_min, lon_max)
+    # print(lat_min, lat_max, lon_min, lon_max)
     # lat_interval, lon_interval = (-90.0, 90.0), (-180.0, 180.0)
     lat_interval, lon_interval = (lat_min, lat_max), (lon_min, lon_max)
     geohash = []
