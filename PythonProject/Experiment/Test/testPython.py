@@ -52,6 +52,13 @@ if __name__ == '__main__':
     # print(map.values())
     # print(map[1] == 123123123123)
     print("-------------------")
-    importlib.reload(sys)
-    sys.getfilesystemencoding()
-    test_dist()
+    # importlib.reload(sys)
+    # sys.getfilesystemencoding()
+    # test_dist()
+    dic = {}
+    for i in range(30):
+        dic[i] = i
+    # dic[1] = 1
+    # dic[2] = 2
+    # dic[3] = 3
+    print(dic.items())
