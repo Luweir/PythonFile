@@ -62,10 +62,12 @@ def line_segment_clustering(traj_segments, epsilon: float = 2.0, min_lines: int 
     """
     cluster_id = 0
     cluster_dict = defaultdict(list)
+    # 计算每个线段的邻域
     for seg in traj_segments:
         _queue = deque(list(), maxlen=50)
         if seg.cluster_id == -1:
             seg_num_neighbor_set = neighborhood(seg, traj_segments, epsilon=epsilon)
+            # 如果领域线段数 超过 聚类最小线段数 则进化为核心线段
             if len(seg_num_neighbor_set) >= min_lines:
                 seg.cluster_id = cluster_id
                 for sub_seg in seg_num_neighbor_set:
@@ -83,7 +85,7 @@ def line_segment_clustering(traj_segments, epsilon: float = 2.0, min_lines: int 
     cluster_number = len(cluster_dict)
     for i in range(0, cluster_number):
         traj_num = len(set(map(lambda s: s.traj_id, cluster_dict[i])))  # 计算每个簇下的轨迹数量
-        print("the %d cluster lines:" % i, traj_num)
+        print("the %d cluster include segments of " % i, traj_num," trajectories")
         if traj_num < min_traj_cluster:
             remove_cluster[i] = cluster_dict.pop(i)
     return cluster_dict, remove_cluster

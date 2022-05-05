@@ -113,8 +113,8 @@ def rdp_trajectory_partitioning(trajectory, traj_id=None, epsilon=1.0):
             index = i
 
     if d_max > epsilon:
-        result = rdp_trajectory_partitioning(trajectory[:index + 1], epsilon=epsilon) + \
-                 rdp_trajectory_partitioning(trajectory[index:], epsilon=epsilon)
+        result = rdp_trajectory_partitioning(trajectory[:index + 1], traj_id=traj_id, epsilon=epsilon) + \
+                 rdp_trajectory_partitioning(trajectory[index:], traj_id=traj_id, epsilon=epsilon)
     else:
         result = [Segment(trajectory[0], trajectory[-1], traj_id=traj_id, cluster_id=-1)]
     return result

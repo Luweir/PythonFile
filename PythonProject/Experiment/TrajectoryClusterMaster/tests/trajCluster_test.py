@@ -56,6 +56,7 @@ if __name__ == '__main__':
     part3 = approximate_trajectory_partitioning(traj3, theta=6.0, traj_id=3)
     part4 = approximate_trajectory_partitioning(traj4, theta=6.0, traj_id=4)
     # ------------------------------------  start my data testing---------------------
+    epsilon = 2
     filename = "10.9.csv"
     traj1 = []  # Track points set
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj1))
-    part1 = rdp_trajectory_partitioning(traj1, 1, 5)
+    part1 = rdp_trajectory_partitioning(traj1, traj_id=1, epsilon=epsilon)
 
     filename = "10.10.csv"
     traj2 = []  # Track points set
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj2))
-    part2 = rdp_trajectory_partitioning(traj2, 2, 5)
+    part2 = rdp_trajectory_partitioning(traj2, 2, epsilon=epsilon)
 
     filename = "10.11.csv"
     traj3 = []  # Track points set
@@ -84,9 +85,9 @@ if __name__ == '__main__':
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj3))
-    part3 = rdp_trajectory_partitioning(traj3, 3, 5)
+    part3 = rdp_trajectory_partitioning(traj3, 3, epsilon=epsilon)
 
-    filename = "10.11.csv"
+    filename = "10.12.csv"
     traj4 = []  # Track points set
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
     for ele in data:
@@ -94,12 +95,12 @@ if __name__ == '__main__':
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj4))
-    part4 = rdp_trajectory_partitioning(traj4, 4, 5)
+    part4 = rdp_trajectory_partitioning(traj4, 4, epsilon=epsilon)
     # -----------------------------------------  end my data testing -------------------
     all_segs = part1 + part2 + part3 + part4
     print("", len(all_segs))
     # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
-    norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=30)
+    norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=10)
     for k, v in remove_cluster.items():
         print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
 
