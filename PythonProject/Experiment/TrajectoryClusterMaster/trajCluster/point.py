@@ -23,10 +23,11 @@ class Point(object):
         dot(other): 实现两个Point对象的dot运算, 得到两个点的值: x**2 + y**2
     """
 
-    def __init__(self, x, y, traj_id=None):
+    def __init__(self, x, y, traj_id=None, t=None):
         self.trajectory_id = traj_id
         self.x = x
         self.y = y
+        self.time = t
 
     def __repr__(self):
         return "{0:.8f},{1:.8f}".format(self.x, self.y)

@@ -8,6 +8,7 @@
 # date      :2019/4/1 14:13
 # log       :包含修改时间、修改人、修改line及原因
 # --------------------------------------------------------------------------------
+import copy
 import math
 
 from .segment import compare, Segment
@@ -92,6 +93,7 @@ def line_segment_clustering(traj_segments, epsilon: float = 2.0, min_lines: int 
 
 
 def representative_trajectory_generation(cluster_segment: dict, min_lines: int = 3, min_dist: float = 2.0):
+    copy_cluster_segment=copy.deepcopy(cluster_segment)
     """通过论文中的算法对轨迹进行变换, 提取代表性路径, 在实际应用中必须和当地的路网结合起来, 提取代表性路径, 该方法就是通过算法生成代表性轨迹
     parameter
     ---------
@@ -103,14 +105,14 @@ def representative_trajectory_generation(cluster_segment: dict, min_lines: int =
         Dict[int, List[Point, ...], ...], 每个类别下的代表性轨迹结果
     """
     representive_point = defaultdict(list)
-    for i in cluster_segment.keys():
-        cluster_size = len(cluster_segment.get(i))
+    for i in copy_cluster_segment.keys():
+        cluster_size = len(copy_cluster_segment.get(i))
         sort_point = []  # [Point, ...], size = cluster_size*2
         rep_point, zero_point = Point(0, 0, -1), Point(1, 0, -1)
 
         # 对某个i类别下的segment进行循环, 计算类别下的平局方向向量: average direction vector
         for j in range(cluster_size):
-            rep_point = rep_point + (cluster_segment[i][j].end - cluster_segment[i][j].start)
+            rep_point = rep_point + (copy_cluster_segment[i][j].end - copy_cluster_segment[i][j].start)
         rep_point = rep_point / float(cluster_size)  # 对所有点的x, y求平局值
 
         cos_theta = rep_point.dot(zero_point) / rep_point.distance(Point(0, 0, -1))  # cos(theta)
@@ -121,14 +123,14 @@ def representative_trajectory_generation(cluster_segment: dict, min_lines: int =
         #   |  |  =   |                         | *  |   |
         #   |y'|      |-sin(theta)   cos(theta) |    | y |
         for j in range(cluster_size):
-            s, e = cluster_segment[i][j].start, cluster_segment[i][j].end
+            s, e = copy_cluster_segment[i][j].start, copy_cluster_segment[i][j].end
             # 坐标轴变换后进行原有的segment修改
-            cluster_segment[i][j] = Segment(
+            copy_cluster_segment[i][j] = Segment(
                 Point(s.x * cos_theta + s.y * sin_theta, s.y * cos_theta - s.x * sin_theta, -1),
                 Point(e.x * cos_theta + e.y * sin_theta, e.y * cos_theta - e.x * sin_theta, -1),
-                traj_id=cluster_segment[i][j].traj_id,
-                cluster_id=cluster_segment[i][j].cluster_id)
-            sort_point.extend([cluster_segment[i][j].start, cluster_segment[i][j].end])
+                traj_id=copy_cluster_segment[i][j].traj_id,
+                cluster_id=copy_cluster_segment[i][j].cluster_id)
+            sort_point.extend([copy_cluster_segment[i][j].start, copy_cluster_segment[i][j].end])
 
         # 对所有点进行排序, 按照横轴的X进行排序, 排序后的point列表应用在后面的计算中
         sort_point = sorted(sort_point, key=lambda _p: _p.x)
@@ -136,7 +138,7 @@ def representative_trajectory_generation(cluster_segment: dict, min_lines: int =
             intersect_cnt = 0.0
             start_y = Point(0, 0, -1)
             for q in range(cluster_size):
-                s, e = cluster_segment[i][q].start, cluster_segment[i][q].end
+                s, e = copy_cluster_segment[i][q].start, copy_cluster_segment[i][q].end
                 # 如果点在segment内则进行下一步的操作:
                 if (sort_point[p].x <= e.x) and (sort_point[p].x >= s.x):
                     if s.x == e.x:

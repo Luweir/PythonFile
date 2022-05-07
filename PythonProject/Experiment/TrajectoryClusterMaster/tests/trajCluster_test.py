@@ -47,6 +47,28 @@ def generateTestTrajectories():
     return traj1, traj2, traj3, traj4
 
 
+def plt_cluster_seg(norm_cluster, num):
+    cluster_cur = norm_cluster[num]
+    seg_line_x = []
+    seg_line_y = []
+    for seg in cluster_cur:
+        seg_line_x.append(seg.start.x / 100)
+        seg_line_x.append(seg.end.x / 100)
+        seg_line_y.append(seg.start.y / 100)
+        seg_line_y.append(seg.end.y / 100)
+    fig = plt.figure(figsize=(9, 6))
+    ax = fig.add_subplot(111)
+    index = 0
+    while index < len(seg_line_y):
+        ax.plot(seg_line_x[index:index + 2], seg_line_y[index:index + 2])
+        index += 2
+    plt.show()
+
+
+def load_data(filename, epsolon=2):
+    ...
+
+
 if __name__ == '__main__':
     traj1, traj2, traj3, traj4 = generateTestTrajectories()
 
@@ -60,8 +82,9 @@ if __name__ == '__main__':
     filename = "10.9.csv"
     traj1 = []  # Track points set
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
+    start_time = data[0][0]
     for ele in data:
-        traj1.append(Point(ele[1] * 100, ele[2] * 100))
+        traj1.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj1))
@@ -70,8 +93,9 @@ if __name__ == '__main__':
     filename = "10.10.csv"
     traj2 = []  # Track points set
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
+    start_time = data[0][0]
     for ele in data:
-        traj2.append(Point(ele[1] * 100, ele[2] * 100))
+        traj2.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj2))
@@ -80,8 +104,9 @@ if __name__ == '__main__':
     filename = "10.11.csv"
     traj3 = []  # Track points set
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
+    start_time = data[0][0]
     for ele in data:
-        traj3.append(Point(ele[1] * 100, ele[2] * 100))
+        traj3.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj3))
@@ -90,8 +115,9 @@ if __name__ == '__main__':
     filename = "10.12.csv"
     traj4 = []  # Track points set
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
+    start_time = data[0][0]
     for ele in data:
-        traj4.append(Point(ele[1] * 100, ele[2] * 100))
+        traj4.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj4))
@@ -159,3 +185,4 @@ if __name__ == '__main__':
     ax.legend()
     plt.savefig("./figure/trajectory-major.png", dpi=400)
     plt.show()
+    # ------------------------------------- 簇内段压缩---------------
