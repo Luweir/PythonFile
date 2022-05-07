@@ -69,6 +69,17 @@ def load_data(filename, epsolon=2):
     ...
 
 
+# ------------------------------------- 簇内段压缩---------------
+def cluster_HAC(norm_cluster):
+    point_list = []
+    # 对于每一个聚簇：
+    # 运行凝聚型层次聚类  将簇内所有点凝聚聚类   保证类内误差距离
+    # 对于同一个类   用类中心表示所有点  同时将 轨迹ID 和 时间 T 以HashMap 形式附加上
+
+    # 返回 HashMap结构：凝聚聚类的类ID  ->  该类内容 包括{中心点坐标  {轨迹ID：time, ... }}
+    ...
+
+
 if __name__ == '__main__':
     traj1, traj2, traj3, traj4 = generateTestTrajectories()
 
@@ -185,4 +196,3 @@ if __name__ == '__main__':
     ax.legend()
     plt.savefig("./figure/trajectory-major.png", dpi=400)
     plt.show()
-    # ------------------------------------- 簇内段压缩---------------
