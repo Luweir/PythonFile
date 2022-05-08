@@ -18,6 +18,7 @@ pointList = [i + 1 for i in range(20)]
 data[0] = pointList
 
 data.pop(0)
+data = np.array(data)
 data_zs = 1.0 * data / data.max()  # 归一化
 
 # 以下代码为仅使用层次聚类

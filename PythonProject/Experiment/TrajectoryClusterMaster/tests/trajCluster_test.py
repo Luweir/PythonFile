@@ -16,7 +16,7 @@ from Experiment.TrajectoryClusterMaster.trajCluster.partition import approximate
 from Experiment.TrajectoryClusterMaster.trajCluster.point import Point
 from Experiment.TrajectoryClusterMaster.trajCluster.cluster import line_segment_clustering, \
     representative_trajectory_generation
-
+from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 from matplotlib import pyplot as plt
 
 
@@ -69,15 +69,68 @@ def load_data(filename, epsolon=2):
     ...
 
 
+class cluster_point:
+    def __init__(self, x, y, dict):
+        self.x = x
+        self.y = y
+        self.dict = dict
+
+
 # ------------------------------------- 簇内段压缩---------------
 def cluster_HAC(norm_cluster):
-    point_list = []
+    # 最终所有聚簇 点聚类结果
+    # point_cluster_result = []
     # 对于每一个聚簇：
-    # 运行凝聚型层次聚类  将簇内所有点凝聚聚类   保证类内误差距离
-    # 对于同一个类   用类中心表示所有点  同时将 轨迹ID 和 时间 T 以HashMap 形式附加上
+    cluster_id = 0
+    for key in norm_cluster:
+        cluster = norm_cluster[key]
+        if len(cluster) < 3:
+            cluster_id += 1
+            continue
+        print("簇ID：", cluster_id, "共有 seg：", len(cluster), " 个, 点：", (2 * len(cluster)), " 个")
+        # 一、运行凝聚型层次聚类  将簇内所有点凝聚聚类   保证类内误差距离
+        point_list = []
+        data = []
+        for seg in cluster:
+            point_list.append(seg.start)
+            point_list.append(seg.end)
+            data.append([seg.start.x, seg.start.y])
+            data.append([seg.end.x, seg.end.y])
+        data = np.array(data)
+        data_zs = 1.0 * data / data.max()  # 归一化
+        mergings = linkage(data_zs, method='average')
 
-    # 返回 HashMap结构：凝聚聚类的类ID  ->  该类内容 包括{中心点坐标  {轨迹ID：time, ... }}
-    ...
+        point_index = [i for i in range(len(point_list))]
+        # plt.figure(figsize=(9, 7))
+        # plt.title("original data")
+        # dendrogram(mergings, labels=point_index, leaf_rotation=45, leaf_font_size=8)
+        # plt.show()
+
+        # t=3 是聚成三类
+        cluster_assignments = fcluster(mergings, t=3.0, criterion='maxclust')
+        print(cluster_assignments)
+
+        # 分类好
+        temp_cluster_list = [[] for i in range(cluster_assignments.max())]
+        for i in range(len(cluster_assignments)):
+            temp_cluster_list[cluster_assignments[i] - 1].append(point_list[i])
+        # 二、对于同一个类   用类中心代替类里面的点
+        for ele in temp_cluster_list:
+            center_x = 0
+            center_y = 0
+            time_dict = {}
+            for e in ele:
+                center_x += e.x
+                center_y += e.y
+                time_dict[e.trajectory_id] = e.time
+            center_x = center_x / len(ele)
+            center_y = center_y / len(ele)
+            for e in ele:
+                e.x = center_x
+                e.y = center_y
+            # point_cluster_result.append(cluster_point(center_x, center_y, time_dict))
+        cluster_id += 1
+    # return point_cluster_result
 
 
 if __name__ == '__main__':
@@ -95,7 +148,7 @@ if __name__ == '__main__':
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
     start_time = data[0][0]
     for ele in data:
-        traj1.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
+        traj1.append(Point(ele[1] * 100, ele[2] * 100, traj_id=1, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj1))
@@ -106,7 +159,7 @@ if __name__ == '__main__':
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
     start_time = data[0][0]
     for ele in data:
-        traj2.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
+        traj2.append(Point(ele[1] * 100, ele[2] * 100, traj_id=2, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj2))
@@ -117,7 +170,7 @@ if __name__ == '__main__':
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
     start_time = data[0][0]
     for ele in data:
-        traj3.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
+        traj3.append(Point(ele[1] * 100, ele[2] * 100, traj_id=3, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj3))
@@ -128,7 +181,7 @@ if __name__ == '__main__':
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
     start_time = data[0][0]
     for ele in data:
-        traj4.append(Point(ele[1] * 100, ele[2] * 100, traj_id=None, t=int(ele[0] - start_time)))
+        traj4.append(Point(ele[1] * 100, ele[2] * 100, traj_id=4, t=int(ele[0] - start_time)))
     # print(points)
     # runPartition(traj, 6.0, 5.0)
     print("原始轨迹长度：", len(traj4))
@@ -140,15 +193,38 @@ if __name__ == '__main__':
     norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=10)
     for k, v in remove_cluster.items():
         print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
+    cluster_HAC(norm_cluster)
 
+    # -------------------------------------输出文件 start -----------------------------------
+    new_traj = []
+    for ele in part1:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part1[-1].end.time, part1[-1].end.x, part1[-1].end.y])
+
+
+    for ele in part2:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part2[-1].end.time, part2[-1].end.x, part2[-1].end.y])
+
+    for ele in part3:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part3[-1].end.time, part3[-1].end.x, part3[-1].end.y])
+
+    for ele in part4:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part4[-1].end.time, part4[-1].end.x, part4[-1].end.y])
+    pd.DataFrame(new_traj).to_csv("output.csv", index=False, header=0)
+
+    # -------------------------------------输出文件 end---------------------------------------
+
+    # 作图
     cluster_s_x, cluster_s_y = [], []
     for k, v in norm_cluster.items():
         cluster_s_x.extend([s.start.x for s in v])
-        cluster_s_x.extend([s.end.x for s in v])
-
-        cluster_s_y.extend([s.start.y for s in v])
-        cluster_s_y.extend([s.end.y for s in v])
-        print("using cluster: the cluster %d, the segment number %d" % (k, len(v)))
+    cluster_s_x.extend([s.end.x for s in v])
+    cluster_s_y.extend([s.start.y for s in v])
+    cluster_s_y.extend([s.end.y for s in v])
+    print("using cluster: the cluster %d, the segment number %d" % (k, len(v)))
 
     source_line_x_1 = [p.x for p in traj1]
     source_line_y_1 = [p.y for p in traj1]
@@ -176,22 +252,22 @@ if __name__ == '__main__':
     for k, v in norm_cluster.items():
         for s in v:
             _x = [s.start.x, s.end.x]
-            _y = [s.start.y, s.end.y]
-            if s.traj_id == 1:
-                ax.plot(_x, _y, c='k', lw=3.0, alpha=0.7)
-            elif s.traj_id == 2:
-                ax.plot(_x, _y, c='c', lw=3.0, alpha=0.7)
-            elif s.traj_id == 3:
-                ax.plot(_x, _y, c='m', lw=3.0, alpha=0.7)
-            else:
-                ax.plot(_x, _y, c='r', lw=3.0, alpha=0.7)
+        _y = [s.start.y, s.end.y]
+        if s.traj_id == 1:
+            ax.plot(_x, _y, c='k', lw=3.0, alpha=0.7)
+        elif s.traj_id == 2:
+            ax.plot(_x, _y, c='c', lw=3.0, alpha=0.7)
+        elif s.traj_id == 3:
+            ax.plot(_x, _y, c='m', lw=3.0, alpha=0.7)
+        else:
+            ax.plot(_x, _y, c='r', lw=3.0, alpha=0.7)
     ax.scatter(cluster_s_x, cluster_s_y, c='k', alpha=0.5, s=80, label="cluster")
 
     main_traj_dict = representative_trajectory_generation(norm_cluster, min_lines=2, min_dist=1.0)
     for c, v in main_traj_dict.items():
         v_x = [p.x for p in v]
-        v_y = [p.y for p in v]
-        ax.plot(v_x, v_y, 'r-', lw=4.0, label="cluster_%d_main_trajectory" % c)
+    v_y = [p.y for p in v]
+    ax.plot(v_x, v_y, 'r-', lw=4.0, label="cluster_%d_main_trajectory" % c)
 
     ax.legend()
     plt.savefig("./figure/trajectory-major.png", dpi=400)
