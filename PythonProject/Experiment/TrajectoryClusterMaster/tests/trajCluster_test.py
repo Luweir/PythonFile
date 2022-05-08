@@ -141,7 +141,9 @@ if __name__ == '__main__':
     part2 = approximate_trajectory_partitioning(traj2, theta=6.0, traj_id=2)
     part3 = approximate_trajectory_partitioning(traj3, theta=6.0, traj_id=3)
     part4 = approximate_trajectory_partitioning(traj4, theta=6.0, traj_id=4)
+
     # ------------------------------------  start my data testing---------------------
+
     epsilon = 2
     filename = "10.9.csv"
     traj1 = []  # Track points set
@@ -189,6 +191,27 @@ if __name__ == '__main__':
     # -----------------------------------------  end my data testing -------------------
     all_segs = part1 + part2 + part3 + part4
     print("", len(all_segs))
+
+    # -----------------------------------输出未聚类之前的 start---------------------------------------
+    new_traj = []
+    for ele in part1:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part1[-1].end.time, part1[-1].end.x, part1[-1].end.y])
+
+    for ele in part2:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part2[-1].end.time, part2[-1].end.x, part2[-1].end.y])
+
+    for ele in part3:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part3[-1].end.time, part3[-1].end.x, part3[-1].end.y])
+
+    for ele in part4:
+        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
+    new_traj.append([part4[-1].end.time, part4[-1].end.x, part4[-1].end.y])
+    pd.DataFrame(new_traj).to_csv("before_clusting.csv", index=False, header=0)
+    # ----------------------------------输出未聚类之前的 end--------------------------------------
+
     # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
     norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=10)
     for k, v in remove_cluster.items():
@@ -200,7 +223,6 @@ if __name__ == '__main__':
     for ele in part1:
         new_traj.append([ele.start.time, ele.start.x, ele.start.y])
     new_traj.append([part1[-1].end.time, part1[-1].end.x, part1[-1].end.y])
-
 
     for ele in part2:
         new_traj.append([ele.start.time, ele.start.x, ele.start.y])
@@ -221,10 +243,10 @@ if __name__ == '__main__':
     cluster_s_x, cluster_s_y = [], []
     for k, v in norm_cluster.items():
         cluster_s_x.extend([s.start.x for s in v])
-    cluster_s_x.extend([s.end.x for s in v])
-    cluster_s_y.extend([s.start.y for s in v])
-    cluster_s_y.extend([s.end.y for s in v])
-    print("using cluster: the cluster %d, the segment number %d" % (k, len(v)))
+        cluster_s_x.extend([s.end.x for s in v])
+        cluster_s_y.extend([s.start.y for s in v])
+        cluster_s_y.extend([s.end.y for s in v])
+        print("using cluster: the cluster %d, the segment number %d" % (k, len(v)))
 
     source_line_x_1 = [p.x for p in traj1]
     source_line_y_1 = [p.y for p in traj1]
@@ -252,15 +274,15 @@ if __name__ == '__main__':
     for k, v in norm_cluster.items():
         for s in v:
             _x = [s.start.x, s.end.x]
-        _y = [s.start.y, s.end.y]
-        if s.traj_id == 1:
-            ax.plot(_x, _y, c='k', lw=3.0, alpha=0.7)
-        elif s.traj_id == 2:
-            ax.plot(_x, _y, c='c', lw=3.0, alpha=0.7)
-        elif s.traj_id == 3:
-            ax.plot(_x, _y, c='m', lw=3.0, alpha=0.7)
-        else:
-            ax.plot(_x, _y, c='r', lw=3.0, alpha=0.7)
+            _y = [s.start.y, s.end.y]
+            if s.traj_id == 1:
+                ax.plot(_x, _y, c='k', lw=3.0, alpha=0.7)
+            elif s.traj_id == 2:
+                ax.plot(_x, _y, c='c', lw=3.0, alpha=0.7)
+            elif s.traj_id == 3:
+                ax.plot(_x, _y, c='m', lw=3.0, alpha=0.7)
+            else:
+                ax.plot(_x, _y, c='r', lw=3.0, alpha=0.7)
     ax.scatter(cluster_s_x, cluster_s_y, c='k', alpha=0.5, s=80, label="cluster")
 
     main_traj_dict = representative_trajectory_generation(norm_cluster, min_lines=2, min_dist=1.0)
