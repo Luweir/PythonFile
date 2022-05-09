@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
     # ------------------------------------  start my data testing---------------------
 
-    epsilon = 2
+    epsilon = 4
     filename = "10.9.csv"
     traj1 = []  # Track points set
     data = pd.read_csv("../../data/" + filename, header=None, sep=',').values.tolist()
@@ -195,20 +195,20 @@ if __name__ == '__main__':
     # -----------------------------------输出未聚类之前的 start---------------------------------------
     new_traj = []
     for ele in part1:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part1[-1].end.time, part1[-1].end.x, part1[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part1[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
 
     for ele in part2:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part2[-1].end.time, part2[-1].end.x, part2[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part2[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
 
     for ele in part3:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part3[-1].end.time, part3[-1].end.x, part3[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part3[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
 
     for ele in part4:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part4[-1].end.time, part4[-1].end.x, part4[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part4[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
     pd.DataFrame(new_traj).to_csv("before_clusting.csv", index=False, header=0)
     # ----------------------------------输出未聚类之前的 end--------------------------------------
 
@@ -221,20 +221,20 @@ if __name__ == '__main__':
     # -------------------------------------输出文件 start -----------------------------------
     new_traj = []
     for ele in part1:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part1[-1].end.time, part1[-1].end.x, part1[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part1[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
 
     for ele in part2:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part2[-1].end.time, part2[-1].end.x, part2[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part2[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
 
     for ele in part3:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part3[-1].end.time, part3[-1].end.x, part3[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part3[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
 
     for ele in part4:
-        new_traj.append([ele.start.time, ele.start.x, ele.start.y])
-    new_traj.append([part4[-1].end.time, part4[-1].end.x, part4[-1].end.y])
+        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+    new_traj.append([part4[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
     pd.DataFrame(new_traj).to_csv("output.csv", index=False, header=0)
 
     # -------------------------------------输出文件 end---------------------------------------
