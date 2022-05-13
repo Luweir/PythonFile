@@ -86,14 +86,14 @@ def line_segment_clustering(traj_segments, epsilon: float = 2.0, min_lines: int 
     cluster_number = len(cluster_dict)
     for i in range(0, cluster_number):
         traj_num = len(set(map(lambda s: s.traj_id, cluster_dict[i])))  # 计算每个簇下的轨迹数量
-        print("the %d cluster include segments of " % i, traj_num," trajectories")
+        print("the %d cluster include segments of " % i, traj_num, " trajectories")
         if traj_num < min_traj_cluster:
             remove_cluster[i] = cluster_dict.pop(i)
     return cluster_dict, remove_cluster
 
 
 def representative_trajectory_generation(cluster_segment: dict, min_lines: int = 3, min_dist: float = 2.0):
-    copy_cluster_segment=copy.deepcopy(cluster_segment)
+    copy_cluster_segment = copy.deepcopy(cluster_segment)
     """通过论文中的算法对轨迹进行变换, 提取代表性路径, 在实际应用中必须和当地的路网结合起来, 提取代表性路径, 该方法就是通过算法生成代表性轨迹
     parameter
     ---------
