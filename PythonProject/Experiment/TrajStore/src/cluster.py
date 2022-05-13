@@ -108,12 +108,13 @@ def line_intersect_circle(p, lsp, esp):
             inp = [p for p in inp if p[0] >= min(x1, x2) and p[0] <= max(x1, x2)]
         else:
             inp = []
-    return inp
+
+    return inp if inp != [] else [[x1, y1]]
 
 
 # 计算轨迹 t1 和 t2 之间的距离
 # 距离 = max(t1各点 与 对应的 t2中的点 的欧式距离)
-# pattern：Flase时仅计算距离 True时进行时间映射  t1的位置映射为t2的时间
+# pattern：Flase 时仅计算距离 True 时进行时间映射  t1的位置映射为t2的时间
 def traj_dist(t1, t2, pattern=False):
     max_dist = -1
     # 1) 对于t1中的每个点 Pi 计算 t2中对应的位置 Pi'
@@ -122,21 +123,24 @@ def traj_dist(t1, t2, pattern=False):
         t1_point = t1.points[i]
         # 1.1 计算 Pi 到第一个点的线性距离 distance_for_pi
         distance_for_pi = euc_dist(t1_point.to_list(), t1.points[0].to_list())
+
+        print("t1_point:", t1_point.x, t1_point.y)
+        print("distance_for_pi:", distance_for_pi)
+
         # 1.2 找到 t2 中距离第一个点 distance_for_pi 距离的位置  本质是一个圆与一个线段的交点
         index = 0
         index_set = set()
         while index < len(t2.points) - 1:
             pre_dist = euc_dist(t2.points[index].to_list(), t2.points[0].to_list())
             aft_dist = euc_dist(t2.points[index + 1].to_list(), t2.points[0].to_list())
-            # 线性距离在 两点之间
+            # 线性距离在 两点之间  为了保证精度 每个对应点位置的确定都遍历一遍 t2
             if (pre_dist <= distance_for_pi <= aft_dist) or (pre_dist >= distance_for_pi >= aft_dist):
                 index_set.add(index)
             index += 1
         # 2) 计算 Pi 与 Pi' 的欧氏距离
         # 如果 distance_for_pi 已经超出了 t2 的范围
-
         if index == len(t2.points) - 1 and len(index_set) == 0:
-            max_dist = get_haversine(t1_point.to_list(), t2.points[index].to_list())
+            max_dist = max(get_haversine(t1_point.to_list(), t2.points[index].to_list()), max_dist)
         else:
             # 范围内 找对应点
             circle_point = t2.points[0]
@@ -149,9 +153,7 @@ def traj_dist(t1, t2, pattern=False):
                 corresponding_point = \
                     line_intersect_circle((circle_point.x, circle_point.y, distance_for_pi), (line_pre.x, line_pre.y),
                                           (line_next.x, line_next.y))
-                # print("t1_point:", t1_point.x, t1_point.y)
-                # print("distance_for_pi:", distance_for_pi)
-                # print("corresponding_point:", corresponding_point)
+
                 corresponding_point = corresponding_point[0]
                 if euc_dist(corresponding_point, t1_point.to_list()) < best_closed_distance:
                     best_position = position
@@ -164,13 +166,14 @@ def traj_dist(t1, t2, pattern=False):
                                       (line_next.x, line_next.y))
             # 如果 pattern = true 说明此时需要进行时间匹配
             corresponding_point = corresponding_point[0]
+            print("corresponding_point:", corresponding_point)
             if pattern:
                 # s1/s=t1/t => t1=(s1/s)*t
                 delta_t = euc_dist(line_pre.to_list(), corresponding_point) / euc_dist(line_pre.to_list(),
                                                                                        line_next.to_list()) * (
                                   line_next.t - line_pre.t)
                 t1.refe_time.append(line_pre.t + delta_t)
-            max_dist = get_haversine(t1_point.to_list(), corresponding_point)
+            max_dist = max(get_haversine(t1_point.to_list(), corresponding_point), max_dist)
             print("max_dist:", max_dist)
     # 3）所有点中最大的距离 即为 return 值
     return max_dist
@@ -182,4 +185,4 @@ def dist(t1, t2):
 
 
 if __name__ == '__main__':
-    print(line_intersect_circle((0, 0, 1), (0.5, 0), (0.5, 1)))
+    print(line_intersect_circle((0, 0, 1), (1, 0), (1, 1)))
