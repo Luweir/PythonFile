@@ -16,30 +16,33 @@ def get_CR_and_time(save_filename, start_time, end_time, points, sample):
 
 
 def get_PED_error(point, sample):
+    max_ped_error = 0
     left_point = sample[0]
     sample_index = 1
     right_point = sample[sample_index]
     point_index = 0
-    ped_error = 0
+    sum_ped_error = 0
     while sample_index < len(sample):
         if right_point[1] != left_point[1] and right_point[2] != left_point[2]:
             # 如果当前点在简化后的两点之间
             while left_point[0] <= point[point_index][0] <= right_point[0]:
                 cur_point = point[point_index]
                 # 计算PED误差
-                ped_error += abs(
+                ped_error = abs(
                     (right_point[2] - left_point[2]) * cur_point[1] - (right_point[1] - left_point[1]) * cur_point[2] +
                     right_point[1] * left_point[2] - right_point[2] * left_point[1]) / math.sqrt(
                     (right_point[2] - left_point[2]) ** 2 + (right_point[1] - left_point[1]) ** 2)
+                sum_ped_error += ped_error
+                max_ped_error = max(max_ped_error, ped_error)
                 point_index += 1
                 if point_index >= len(point):
-                    return ped_error
+                    return sum_ped_error / len(point), max_ped_error
         sample_index += 1
         if sample_index >= len(sample):
-            return ped_error
+            break;
         left_point = right_point
         right_point = sample[sample_index]
-    return ped_error
+    return sum_ped_error / len(point), max_ped_error
 
 
 def get_SED_error(point, sample):
@@ -61,13 +64,13 @@ def get_SED_error(point, sample):
                 sed_error += math.sqrt((cur_point[1] - new_x) ** 2 + (cur_point[2] - new_y) ** 2)
                 point_index += 1
                 if point_index >= len(point):
-                    return sed_error
+                    return sed_error / len(point)
         sample_index += 1
         if sample_index >= len(sample):
-            return sed_error
+            return sed_error / len(point)
         left_point = right_point
         right_point = sample[sample_index]
-    return sed_error
+    return sed_error / len(point)
 
 
 # p2的速度误差 = p2的平均速度 - p1p3的平均速度
@@ -91,13 +94,13 @@ def get_speed_error(point, sample):
                 speed_error += abs(sample_speed - point_speed)
                 point_index += 1
                 if point_index >= len(point):
-                    return speed_error/len(point)
+                    return speed_error / len(point)
         sample_index += 1
         if sample_index >= len(sample):
-            return speed_error/len(point)
+            return speed_error / len(point)
         left_point = right_point
         right_point = sample[sample_index]
-    return speed_error/len(point)
+    return speed_error / len(point)
 
 
 # p2的角度误差 = p1p2的角度 与 p1p2'的角度差

@@ -26,3 +26,9 @@ class Trajectory:
 
     def add_point(self, point):
         self.points.append(point)
+
+    def to_list(self):
+        trajectory_list = []
+        for ele in self.points:
+            trajectory_list.append([ele.t, ele.x, ele.y])
+        return trajectory_list

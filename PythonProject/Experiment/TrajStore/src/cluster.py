@@ -101,8 +101,8 @@ def line_intersect_circle(p, lsp, esp):
         if delta >= 0:
             p1x = round((-b - math.sqrt(delta)) / (2 * a), 5)
             p2x = round((-b + math.sqrt(delta)) / (2 * a), 5)
-            p1y = round(k * x1 + b0, 5)
-            p2y = round(k * x2 + b0, 5)
+            p1y = round(k * p1x + b0, 5)
+            p2y = round(k * p2x + b0, 5)
             inp = [[p1x, p1y], [p2x, p2y]]
             # select the points lie on the line segment
             inp = [p for p in inp if p[0] >= min(x1, x2) and p[0] <= max(x1, x2)]
@@ -114,12 +114,12 @@ def line_intersect_circle(p, lsp, esp):
 
 # 计算轨迹 t1 和 t2 之间的距离
 # 距离 = max(t1各点 与 对应的 t2中的点 的欧式距离)
-# pattern：Flase 时仅计算距离 True 时进行时间映射  t1的位置映射为t2的时间
+# pattern：False 时仅计算距离 True 时进行时间映射  t1的位置映射为t2的时间
 def traj_dist(t1, t2, pattern=False):
     max_dist = -1
     # 1) 对于t1中的每个点 Pi 计算 t2中对应的位置 Pi'
     for i in range(len(t1.points)):
-        print(i)
+        print("i: ", i)
         t1_point = t1.points[i]
         # 1.1 计算 Pi 到第一个点的线性距离 distance_for_pi
         distance_for_pi = euc_dist(t1_point.to_list(), t1.points[0].to_list())
@@ -141,6 +141,8 @@ def traj_dist(t1, t2, pattern=False):
         # 如果 distance_for_pi 已经超出了 t2 的范围
         if index == len(t2.points) - 1 and len(index_set) == 0:
             max_dist = max(get_haversine(t1_point.to_list(), t2.points[index].to_list()), max_dist)
+            if pattern:
+                t1.refe_time.append(t2.points[index].t)
         else:
             # 范围内 找对应点
             circle_point = t2.points[0]
@@ -153,12 +155,12 @@ def traj_dist(t1, t2, pattern=False):
                 corresponding_point = \
                     line_intersect_circle((circle_point.x, circle_point.y, distance_for_pi), (line_pre.x, line_pre.y),
                                           (line_next.x, line_next.y))
-
                 corresponding_point = corresponding_point[0]
-                if euc_dist(corresponding_point, t1_point.to_list()) < best_closed_distance:
+                if get_haversine(corresponding_point, t1_point.to_list()) < best_closed_distance:
                     best_position = position
-                    best_closed_distance = euc_dist(corresponding_point, t1_point.to_list())
+                    best_closed_distance = get_haversine(corresponding_point, t1_point.to_list())
             # 计算与原始位置的 地理距离
+            print("j: ", best_position)
             line_pre = t2.points[best_position]
             line_next = t2.points[best_position + 1]
             corresponding_point = \
@@ -172,9 +174,9 @@ def traj_dist(t1, t2, pattern=False):
                 delta_t = euc_dist(line_pre.to_list(), corresponding_point) / euc_dist(line_pre.to_list(),
                                                                                        line_next.to_list()) * (
                                   line_next.t - line_pre.t)
-                t1.refe_time.append(line_pre.t + delta_t)
+                t1.refe_time.append(line_pre.t + int(delta_t))
             max_dist = max(get_haversine(t1_point.to_list(), corresponding_point), max_dist)
-            print("max_dist:", max_dist)
+        print("max_dist:", max_dist)
     # 3）所有点中最大的距离 即为 return 值
     return max_dist
 
@@ -185,4 +187,8 @@ def dist(t1, t2):
 
 
 if __name__ == '__main__':
-    print(line_intersect_circle((0, 0, 1), (1, 0), (1, 1)))
+    print(get_haversine([29.83, 121.228], [29.82, 121.229]))
+    # 大概实际距离是 欧式距离的10000倍
+    # 1116.1660304832283
+    # 0.01005
+    print(euc_dist([29.83, 121.228], [29.82, 121.229]))

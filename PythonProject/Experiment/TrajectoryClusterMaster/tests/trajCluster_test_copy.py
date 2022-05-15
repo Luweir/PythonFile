@@ -8,6 +8,7 @@
 # date      :2019/4/3 13:51
 # log       :包含修改时间、修改人、修改line及原因
 # --------------------------------------------------------------------------------
+import math
 import numpy as np
 import pandas as pd
 
@@ -18,6 +19,22 @@ from Experiment.TrajectoryClusterMaster.trajCluster.cluster import line_segment_
     representative_trajectory_generation
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 from matplotlib import pyplot as plt
+import Experiment.compare_result.compare as compare
+
+EARTH_RADIUS = 6371229  # m 用于两点间距离计算
+
+
+# 两点直接的距离 实际距离
+def get_haversine(point_a, point_b):
+    lat1 = point_a[0] * math.pi / 180
+    lat2 = point_b[0] * math.pi / 180
+    lon1 = point_a[1] * math.pi / 180
+    lon2 = point_b[1] * math.pi / 180
+    d_lat = lat2 - lat1
+    d_lon = lon2 - lon1
+    a_a = math.sin(d_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(d_lon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a_a), math.sqrt(1 - a_a))
+    return EARTH_RADIUS * c
 
 
 def generateTestTrajectories():
@@ -77,7 +94,7 @@ class cluster_point:
 
 
 # ------------------------------------- 簇内段压缩---------------
-def cluster_HAC(norm_cluster):
+def cluster_HAC(norm_cluster, t=25000):
     # 最终所有聚簇 点聚类结果
     # point_cluster_result = []
     # 对于每一个聚簇：
@@ -98,7 +115,7 @@ def cluster_HAC(norm_cluster):
             data.append([seg.end.x, seg.end.y])
         data = np.array(data)
         data_zs = 1.0 * data / data.max()  # 归一化
-        mergings = linkage(data_zs, method='average')
+        mergings = linkage(data_zs, method='complete', metric=get_haversine)
 
         point_index = [i for i in range(len(point_list))]
         # plt.figure(figsize=(9, 7))
@@ -106,9 +123,10 @@ def cluster_HAC(norm_cluster):
         # dendrogram(mergings, labels=point_index, leaf_rotation=45, leaf_font_size=8)
         # plt.show()
 
-        # t=3 是聚成三类
-        cluster_assignments = fcluster(mergings, t=3.0, criterion='maxclust')
-        print(cluster_assignments)
+        # t 是标准   如t=3 是聚成三类  或者是后面距离的标准
+        cluster_assignments = fcluster(mergings, t=t, criterion='distance')
+        print("该聚簇的点可分为：", cluster_assignments.max(), " 类")
+        print("cluster_assignments:", cluster_assignments)
 
         # 分类好
         temp_cluster_list = [[] for i in range(cluster_assignments.max())]
@@ -146,7 +164,7 @@ def generate_trajectory(data):
 
 
 if __name__ == '__main__':
-    traj1, traj2, traj3, traj4 = generateTestTrajectories()
+    # traj1, traj2, traj3, traj4 = generateTestTrajectories()
 
     # part 1: partition
     # part1 = approximate_trajectory_partitioning(traj1, theta=6.0, traj_id=1)
@@ -155,80 +173,28 @@ if __name__ == '__main__':
     # part4 = approximate_trajectory_partitioning(traj4, theta=6.0, traj_id=4)
 
     # ------------------------------------  start my data testing---------------------
-
-    epsilon = 4
-    traj1 = []  # Track points set
-    data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_0.csv", header=None, sep=',').values.tolist()
-    start_time = data[0][0]
-    for ele in data:
-        traj1.append(Point(ele[1] * 100, ele[2] * 100, traj_id=1, t=int(ele[0] - start_time)))
-    # print(points)
-    # runPartition(traj, 6.0, 5.0)
-    print("原始轨迹长度：", len(traj1))
-    part1 = rdp_trajectory_partitioning(traj1, traj_id=1, epsilon=epsilon)
-
-    traj2 = []  # Track points set
-    data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_1.csv", header=None, sep=',').values.tolist()
-    start_time = data[0][0]
-    for ele in data:
-        traj2.append(Point(ele[1] * 100, ele[2] * 100, traj_id=2, t=int(ele[0] - start_time)))
-    # print(points)
-    # runPartition(traj, 6.0, 5.0)
-    print("原始轨迹长度：", len(traj2))
-    part2 = rdp_trajectory_partitioning(traj2, 2, epsilon=epsilon)
-
-    traj3 = []  # Track points set
-    data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_2.csv", header=None, sep=',').values.tolist()
-    start_time = data[0][0]
-    for ele in data:
-        traj3.append(Point(ele[1] * 100, ele[2] * 100, traj_id=3, t=int(ele[0] - start_time)))
-    # print(points)
-    # runPartition(traj, 6.0, 5.0)
-    print("原始轨迹长度：", len(traj3))
-    part3 = rdp_trajectory_partitioning(traj3, 3, epsilon=epsilon)
-
-    traj4 = []  # Track points set
-    data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_3.csv", header=None, sep=',').values.tolist()
-    start_time = data[0][0]
-    for ele in data:
-        traj4.append(Point(ele[1] * 100, ele[2] * 100, traj_id=4, t=int(ele[0] - start_time)))
-    # print(points)
-    # runPartition(traj, 6.0, 5.0)
-    print("原始轨迹长度：", len(traj4))
-    part4 = rdp_trajectory_partitioning(traj4, 4, epsilon=epsilon)
-
-    traj5 = []  # Track points set
-    data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_4.csv", header=None, sep=',').values.tolist()
-    start_time = data[0][0]
-    for ele in data:
-        traj4.append(Point(ele[1] * 100, ele[2] * 100, traj_id=4, t=int(ele[0] - start_time)))
-    # print(points)
-    # runPartition(traj, 6.0, 5.0)
-    print("原始轨迹长度：", len(traj4))
-    part5 = rdp_trajectory_partitioning(traj4, 4, epsilon=epsilon)
-
-    traj6 = []  # Track points set
-    data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_5.csv", header=None, sep=',').values.tolist()
-    start_time = data[0][0]
-    for ele in data:
-        traj4.append(Point(ele[1] * 100, ele[2] * 100, traj_id=4, t=int(ele[0] - start_time)))
-    # print(points)
-    # runPartition(traj, 6.0, 5.0)
-    print("原始轨迹长度：", len(traj4))
-    part6 = rdp_trajectory_partitioning(traj4, 4, epsilon=epsilon)
-
-    traj7 = []  # Track points set
-    data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_6.csv", header=None, sep=',').values.tolist()
-    start_time = data[0][0]
-    for ele in data:
-        traj4.append(Point(ele[1] * 100, ele[2] * 100, traj_id=4, t=int(ele[0] - start_time)))
-    # print(points)
-    # runPartition(traj, 6.0, 5.0)
-    print("原始轨迹长度：", len(traj4))
-    part7 = rdp_trajectory_partitioning(traj4, 4, epsilon=epsilon)
+    # DP 算法的阈值
+    epsilon = 0.37
+    trajs = []
+    parts = []
+    for i in range(7):
+        traj = []  # Track points set
+        data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_" + str(i) + ".csv", header=None,
+                           sep=',').values.tolist()
+        start_time = data[0][0]
+        for ele in data:
+            traj.append(Point(ele[1] * 100, ele[2] * 100, traj_id=i, t=int(ele[0] - start_time)))
+        # print(points)
+        # runPartition(traj, 6.0, 5.0)
+        print("原始轨迹长度：", len(traj))
+        part = rdp_trajectory_partitioning(traj, traj_id=i, epsilon=epsilon)
+        trajs.append(traj)
+        parts.append(part)
     # -----------------------------------------  end my data testing -------------------
-    all_segs = part1 + part2 + part3 + part4 + part5 + part6 + part7
-    print("", len(all_segs))
+    all_segs = []
+    for ele in parts:
+        all_segs += ele
+    print("一共多少轨迹段:", len(all_segs))
 
     # -----------------------------------输出未聚类之前的 start---------------------------------------
     # new_traj = []
@@ -254,41 +220,37 @@ if __name__ == '__main__':
     norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=10)
     for k, v in remove_cluster.items():
         print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
-    cluster_HAC(norm_cluster)
+    cluster_HAC(norm_cluster, t=100)
 
     # -------------------------------------输出文件 start -----------------------------------
     new_traj = []
-    for ele in part1:
-        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    new_traj.append([part1[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-
-    for ele in part2:
-        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    new_traj.append([part2[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-
-    for ele in part3:
-        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    new_traj.append([part3[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-
-    for ele in part4:
-        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    new_traj.append([part4[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-
-    for ele in part5:
-        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    new_traj.append([part4[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-
-    for ele in part6:
-        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    new_traj.append([part4[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-
-    for ele in part7:
-        new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    new_traj.append([part4[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
+    for part in parts:
+        for ele in part:
+            new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100, 4)])
+        new_traj.append([part[-1].end.time, round(part[-1].end.x / 100, 4), round(part[-1].end.y / 100, 4)])
     pd.DataFrame(new_traj).to_csv("output.csv", index=False, header=0)
 
     # -------------------------------------输出文件 end---------------------------------------
 
+    # -------------------------------------测试误差 start-------------------------------------
+    average_ped_error = 0
+    max_ped_error = 0
+    for i in range(7):
+        old_traj = []
+        for ele in trajs[i]:
+            old_traj.append([ele.time, ele.x/100, ele.y/100])
+        new_traj = []
+        for ele in parts[i]:
+            new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100, 4)])
+        new_traj.append([parts[i][-1].end.time, round(parts[i][-1].end.x / 100, 4), round(parts[i][-1].end.y / 100, 4)])
+        a, b = compare.get_PED_error(old_traj, new_traj)
+        print("[traj" + str(i) + "] average PED error: ", a, ", max_ped_error: ", b)
+        average_ped_error += a
+        max_ped_error = max(max_ped_error, b)
+    print("total： average ped error：", average_ped_error / 7, ", max_ped_error: ", max_ped_error)
+    # print("traj1 SED error: ", compare.get_SED_error(old_traj, new_traj))
+
+    # -------------------------------------测试误差 end---------------------------------------
     # 作图
     # cluster_s_x, cluster_s_y = [], []
     # for k, v in norm_cluster.items():
