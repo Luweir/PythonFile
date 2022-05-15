@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     # ------------------------------------  start my data testing---------------------
     # DP 算法的阈值
-    epsilon = 0.37
+    epsilon = 0.5
     trajs = []
     parts = []
     for i in range(7):
@@ -197,32 +197,22 @@ if __name__ == '__main__':
     print("一共多少轨迹段:", len(all_segs))
 
     # -----------------------------------输出未聚类之前的 start---------------------------------------
-    # new_traj = []
-    # for ele in part1:
-    #     new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    # new_traj.append([part1[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-    #
-    # for ele in part2:
-    #     new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    # new_traj.append([part2[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-    #
-    # for ele in part3:
-    #     new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    # new_traj.append([part3[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-    #
-    # for ele in part4:
-    #     new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-    # new_traj.append([part4[-1].end.time, round(part1[-1].end.x / 100, 4), round(part1[-1].end.y / 100, 4)])
-    # pd.DataFrame(new_traj).to_csv("before_clusting.csv", index=False, header=0)
+    new_traj = []
+    for part in parts:
+        for ele in part:
+            new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
+        new_traj.append([part[-1].end.time, round(part[-1].end.x / 100, 4), round(part[-1].end.y / 100, 4)])
+    pd.DataFrame(new_traj).to_csv("before_point_clusting.csv", index=False, header=0)
     # ----------------------------------输出未聚类之前的 end--------------------------------------
 
+    # 进行点的聚类
     # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
     norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=10)
     for k, v in remove_cluster.items():
         print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
     cluster_HAC(norm_cluster, t=100)
 
-    # -------------------------------------输出文件 start -----------------------------------
+    # -------------------------------------输出聚类之后的 start -----------------------------------
     new_traj = []
     for part in parts:
         for ele in part:
@@ -230,7 +220,7 @@ if __name__ == '__main__':
         new_traj.append([part[-1].end.time, round(part[-1].end.x / 100, 4), round(part[-1].end.y / 100, 4)])
     pd.DataFrame(new_traj).to_csv("output.csv", index=False, header=0)
 
-    # -------------------------------------输出文件 end---------------------------------------
+    # -------------------------------------输出聚类之后的 end---------------------------------------
 
     # -------------------------------------测试误差 start-------------------------------------
     average_ped_error = 0
@@ -238,7 +228,7 @@ if __name__ == '__main__':
     for i in range(7):
         old_traj = []
         for ele in trajs[i]:
-            old_traj.append([ele.time, ele.x/100, ele.y/100])
+            old_traj.append([ele.time, ele.x / 100, ele.y / 100])
         new_traj = []
         for ele in parts[i]:
             new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100, 4)])
