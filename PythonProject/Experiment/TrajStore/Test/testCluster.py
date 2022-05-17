@@ -10,12 +10,12 @@ import random
 def generate_trajectory(data):
     trajectory = []
     for i in range(len(data)):
-        trajectory.append(Point(data.iloc[i][1] + random.uniform(-0.001, 0.001),
-                                data.iloc[i][2] + random.uniform(-0.001, 0.001),
-                                data.iloc[i][0] + random.randint(-5, 5)))
-        # trajectory.append(Point(data.iloc[i][1],
-        #                         data.iloc[i][2],
-        #                         data.iloc[i][0]))
+        # trajectory.append(Point(data.iloc[i][1] + random.uniform(-0.001, 0.001),
+        #                         data.iloc[i][2] + random.uniform(-0.001, 0.001),
+        #                         data.iloc[i][0] + random.randint(-5, 5)))
+        trajectory.append(Point(data.iloc[i][1],
+                                data.iloc[i][2],
+                                data.iloc[i][0]))
     return trajectory
 
 
@@ -88,25 +88,26 @@ def restore_trajectory_ped_error(trajectory, hash_map):
 
 
 if __name__ == '__main__':
-    data1 = pd.read_csv("../../data/10.9.csv", header=None)[:-15]
+    data1 = pd.read_csv("../../data/10.9.csv", header=None)
     # data2 = pd.read_csv("../../data/10.9.csv", header=None)
     # data3 = pd.read_csv("../../data/10.11.csv", header=None)
-    # trajectories = [Trajectory(0, generate_trajectory(pd.read_csv("output_origin_trajectory_0.csv", header=None))),
-    #                 Trajectory(1, generate_trajectory(pd.read_csv("output_origin_trajectory_1.csv", header=None))),
-    #                 Trajectory(2, generate_trajectory(pd.read_csv("output_origin_trajectory_2.csv", header=None))),
-    #                 Trajectory(3, generate_trajectory(pd.read_csv("output_origin_trajectory_3.csv", header=None))),
-    #                 Trajectory(4, generate_trajectory(pd.read_csv("output_origin_trajectory_4.csv", header=None))),
-    #                 Trajectory(5, generate_trajectory(pd.read_csv("output_origin_trajectory_5.csv", header=None))),
-    #                 Trajectory(6, generate_trajectory(pd.read_csv("output_origin_trajectory_6.csv", header=None)))]
-    trajectories = [Trajectory(0, generate_trajectory(data1)),
-                    Trajectory(1, generate_trajectory(data1)),
-                    Trajectory(2, generate_trajectory(data1)),
-                    Trajectory(3, generate_trajectory(data1)),
-                    Trajectory(4, generate_trajectory(data1)),
-                    Trajectory(5, generate_trajectory(data1)),
-                    Trajectory(6, generate_trajectory(data1))]
+    trajectories = [Trajectory(0, generate_trajectory(pd.read_csv("output_origin_trajectory_0.csv", header=None))),
+                    Trajectory(1, generate_trajectory(pd.read_csv("output_origin_trajectory_1.csv", header=None))),
+                    Trajectory(2, generate_trajectory(pd.read_csv("output_origin_trajectory_2.csv", header=None))),
+                    Trajectory(3, generate_trajectory(pd.read_csv("output_origin_trajectory_3.csv", header=None))),
+                    Trajectory(4, generate_trajectory(pd.read_csv("output_origin_trajectory_4.csv", header=None))),
+                    Trajectory(5, generate_trajectory(pd.read_csv("output_origin_trajectory_5.csv", header=None))),
+                    Trajectory(6, generate_trajectory(pd.read_csv("output_origin_trajectory_6.csv", header=None)))
+                    ]
+    # trajectories = [Trajectory(0, generate_trajectory(data1)),
+    #                 Trajectory(1, generate_trajectory(data1)),
+    #                 Trajectory(2, generate_trajectory(data1)),
+    #                 Trajectory(3, generate_trajectory(data1)),
+    #                 Trajectory(4, generate_trajectory(data1)),
+    #                 Trajectory(5, generate_trajectory(data1)),
+    #                 Trajectory(6, generate_trajectory(data1))]
     print(trajectories)
-    group = trajStore_cluster(trajectories, 1000)
+    group = trajStore_cluster(trajectories, 200)
     # print(group)
     # output_origin_trajectory(trajectories)
     # output_compressed_trajectory(trajectories)
