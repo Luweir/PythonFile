@@ -1,10 +1,10 @@
-import pymysql
+# import pymysql
 
 from config import appid, token
 import qqbot
-
-db = pymysql.connect(host="localhost", user="root", password="1234", database="book")
-cursor = db.cursor()
+#
+# db = pymysql.connect(host="localhost", user="root", password="1234", database="book")
+# cursor = db.cursor()
 
 token = qqbot.Token(appid, token)
 api = qqbot.UserAPI(token, False)
