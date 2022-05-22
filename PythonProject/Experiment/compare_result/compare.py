@@ -36,13 +36,13 @@ def get_PED_error(point, sample):
                 max_ped_error = max(max_ped_error, ped_error)
                 point_index += 1
                 if point_index >= len(point):
-                    return sum_ped_error / len(point), max_ped_error
+                    return [sum_ped_error / len(point), max_ped_error]
         sample_index += 1
         if sample_index >= len(sample):
-            break;
+            break
         left_point = right_point
         right_point = sample[sample_index]
-    return sum_ped_error / len(point), max_ped_error
+    return [sum_ped_error / len(point), max_ped_error]
 
 
 def get_SED_error(point, sample):

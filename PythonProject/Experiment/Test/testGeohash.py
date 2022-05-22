@@ -1,7 +1,5 @@
 import math
-import scipy.stats as stats
 import numpy as np
-import Experiment.FastDTW.fast_dtw_neigbors as dtw
 import Experiment.Test.geo_hash as gh
 import pandas as pd
 

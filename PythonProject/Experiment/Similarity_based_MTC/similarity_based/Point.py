@@ -14,5 +14,10 @@ class Point:
         self.y = y
         self.t2 = None  # 匹配点 t2 指向一个 Point
 
+    # 转换成列表 不含t
     def to_list(self):
         return [self.x, self.y]
+
+    # 含时间 t 转换为列表
+    def to_list_t(self):
+        return [self.t, self.x, self.y]

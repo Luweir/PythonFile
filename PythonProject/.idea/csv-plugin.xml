@@ -3,6 +3,27 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="\Experiment\Similarity_based_MTC\Test\output_compressed_trajectory.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\Experiment\Similarity_based_MTC\Test\output_origin_trajectory_0.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\Experiment\Similarity_based_MTC\Test\output_origin_trajectory_1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\Experiment\TrajStore\Test\output_origin_trajectory_0.csv">
           <value>
             <Attribute>
@@ -46,6 +67,13 @@
           </value>
         </entry>
         <entry key="\Experiment\data\10.9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\Experiment\data\20081023025304-0.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

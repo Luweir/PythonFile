@@ -3,9 +3,12 @@ class Trajectory:
     refe_traj_id = -1
     points = []
 
-    def __int__(self, traj_id):
+    def __init__(self, traj_id, points: list = None):
         self.traj_id = traj_id
+        self.refe_traj_id = -1
         self.points = []
+        if points is not None:
+            self.points = points
 
     def set_points(self, points: list):
         self.points = points
