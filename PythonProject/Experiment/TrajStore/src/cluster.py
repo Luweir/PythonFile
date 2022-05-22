@@ -112,7 +112,7 @@ def line_intersect_circle(p, lsp, esp):
     return inp if inp != [] else [[x1, y1]]
 
 
-# 点与线段的交点  交点在线段上 则返回交点  不在线段上  则返回线段两段距离点最近的点
+# 点与线段的交点  交点在线段上 则返回交点  不在线段上  则返回线段两端距离点最近的点
 def point_intersect_line(p, l1, l2):
     x0, y0 = p
     x1, y1 = l1
@@ -140,8 +140,6 @@ def traj_dist(t1, t2, pattern=False):
     # 1) 对于t1中的每个点 Pi 计算 t2中对应的位置 Pi'
     for i in range(len(t1.points)):
         print("i: ", i)
-        if i == 163:
-            print(111)
         t1_point = t1.points[i]
         # 1.1 计算 Pi 到第一个点的线性距离 distance_for_pi
         distance_for_pi = euc_dist(t1_point.to_list(), t1.points[0].to_list())
@@ -157,8 +155,6 @@ def traj_dist(t1, t2, pattern=False):
         index = 0
         index_set = set()
         while index < len(t2.points) - 1:
-            if index == 162:
-                print(111)
             pre_dist = euc_dist(t2.points[index].to_list(), t2.points[0].to_list())
             aft_dist = euc_dist(t2.points[index + 1].to_list(), t2.points[0].to_list())
             if abs((pre_dist + aft_dist) / 2 - distance_for_pi) < nc_point_closed_error:
@@ -179,7 +175,6 @@ def traj_dist(t1, t2, pattern=False):
 
         # 2) 计算 Pi 与 Pi' 的欧氏距离
         # 如果 distance_for_pi 已经超出了 t2 的范围   即找不到对应点  选择nc_point_closed_index
-        print(1111)
         if index == len(t2.points) - 1 and len(index_set) == 0:
             print("j:", index)
             line_pre = t2.points[nc_point_closed_index]
@@ -200,8 +195,6 @@ def traj_dist(t1, t2, pattern=False):
                 max_dist = max(max_dist, dist2)
                 if pattern:
                     t1.refe_time.append(t2.points[index].t)
-            if max_dist > 500:
-                print(111111)
         else:
             # 范围内 找对应点
             circle_point = t2.points[0]
@@ -249,8 +242,6 @@ def traj_dist(t1, t2, pattern=False):
                                   line_next.t - line_pre.t)
                 t1.refe_time.append(line_pre.t + int(delta_t))
             max_dist = max(get_haversine(t1_point.to_list(), corresponding_point), max_dist)
-            if max_dist > 500:
-                print(111111)
         print("max_dist:", max_dist)
     # 3）所有点中最大的距离 即为 return 值
     return max_dist

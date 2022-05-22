@@ -11,7 +11,7 @@ import pandas as pd
 class Trajectory:
     traj_id = -1  # 轨迹自身ID
     points = []  # 自身轨迹点
-    traj_size = 0  # 轨迹点长度
+    traj_size = 0  # 轨迹长度
     refe_traj_id = -1  # 参考轨迹ID
     refe_time = []  # 对应在参考轨迹上的时间
 

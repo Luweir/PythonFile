@@ -107,7 +107,7 @@ if __name__ == '__main__':
     #                 Trajectory(5, generate_trajectory(data1)),
     #                 Trajectory(6, generate_trajectory(data1))]
     print(trajectories)
-    group = trajStore_cluster(trajectories, 200)
+    group = trajStore_cluster(trajectories, 300)
     # print(group)
     # output_origin_trajectory(trajectories)
     # output_compressed_trajectory(trajectories)
