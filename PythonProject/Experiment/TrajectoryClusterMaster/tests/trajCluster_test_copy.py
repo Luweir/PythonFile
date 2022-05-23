@@ -19,7 +19,7 @@ from Experiment.TrajectoryClusterMaster.trajCluster.cluster import line_segment_
     representative_trajectory_generation
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 from matplotlib import pyplot as plt
-import Experiment.compare_result.compare as compare
+import Experiment.compare.compare as compare
 
 EARTH_RADIUS = 6371229  # m 用于两点间距离计算
 

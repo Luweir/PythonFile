@@ -1,6 +1,6 @@
 import time
 import math
-import Experiment.compare_result.compare as cr
+import Experiment.compare.compare as cr
 import pandas as pd
 
 

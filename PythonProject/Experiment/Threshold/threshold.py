@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import time
 import math
-import Experiment.compare_result.compare as cr
+import Experiment.compare.compare as cr
 
 
 # points=[点1(时间time,纬度lat,经度lon),点2(时间time,纬度lat,经度lon),...]

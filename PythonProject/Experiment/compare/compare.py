@@ -29,7 +29,6 @@ def get_PED_error(point, sample):
                 break
             cur_point = point[point_index]
             # 计算PED误差
-            ped_error = 0
             if left_point[1] == right_point[1] and left_point[2] == right_point[2]:
                 ped_error = math.sqrt((left_point[1] - cur_point[1]) ** 2 + (left_point[2] - right_point[2]) ** 2)
             else:
@@ -39,6 +38,8 @@ def get_PED_error(point, sample):
                     (right_point[2] - left_point[2]) ** 2 + (right_point[1] - left_point[1]) ** 2)
             sum_ped_error += ped_error
             max_ped_error = max(max_ped_error, ped_error)
+            if max_ped_error > 0.003:
+                print(111)
             point_index += 1
             if point_index >= len(point):
                 return [sum_ped_error / len(point), max_ped_error]
@@ -47,6 +48,7 @@ def get_PED_error(point, sample):
             break
         left_point = right_point
         right_point = sample[sample_index]
+    print(sum_ped_error)
     return [sum_ped_error / len(point), max_ped_error]
 
 

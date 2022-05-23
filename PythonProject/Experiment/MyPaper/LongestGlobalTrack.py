@@ -3,7 +3,7 @@ import time
 import numpy as np
 import math
 import Experiment.DP.dp as dp
-import Experiment.compare_result.compare as cr
+import Experiment.compare.compare as cr
 
 
 class FeaturePoints:

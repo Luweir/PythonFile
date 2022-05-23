@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-
 # 单线图轨迹位置，传入DataFrame data
 def get_line_chart(data):
     plt.figure(figsize=(12, 8))

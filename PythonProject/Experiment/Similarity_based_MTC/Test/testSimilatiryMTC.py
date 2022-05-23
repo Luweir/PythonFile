@@ -6,7 +6,7 @@ import random
 from Experiment.Similarity_based_MTC.similarity_based.Point import Point
 from Experiment.Similarity_based_MTC.similarity_based.Trajectory import Trajectory
 from Experiment.Similarity_based_MTC.similarity_based.mtc import mtc, mtc_add
-from Experiment.compare_result.compare import get_PED_error
+from Experiment.compare.compare import get_PED_error
 
 
 def generate_trajectory(data):

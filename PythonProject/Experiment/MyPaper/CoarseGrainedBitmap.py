@@ -2,7 +2,7 @@ import math
 import time
 import pandas as pd
 import numpy as np
-import Experiment.compare_result.compare as cr
+import Experiment.compare.compare as cr
 
 
 # 加载数据集

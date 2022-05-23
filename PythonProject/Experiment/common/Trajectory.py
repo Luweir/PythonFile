@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+from typing import List
+
+from Experiment.common.Point import Point
 
 
 # ---------------------------------------------
@@ -9,20 +12,18 @@ import pandas as pd
 # ---------------------------------------------
 
 class Trajectory:
-    traj_id = -1  # 轨迹自身ID
-    points = []  # 自身轨迹点
-    traj_size = 0  # 轨迹长度
-    refe_traj_id = -1  # 参考轨迹ID
-    refe_time = []  # 对应在参考轨迹上的时间
+    trajectory_id = -1  # 轨迹自身ID
+    points: List[Point] = []  # 自身轨迹点
+    reference_trajectory_id = -1  # 参考轨迹ID
+    reference_time = []  # 对应在参考轨迹上的时间
 
-    def __init__(self, traj_id, trajectory=None):
-        self.traj_id = traj_id
-        self.refe_traj_id = -1
-        self.refe_time = []
+    def __init__(self, trajectory_id, trajectory=None):
+        self.trajectory_id = trajectory_id
+        self.reference_trajectory_id = -1
+        self.reference_time = []
         self.points = []
         if trajectory:
             self.points = trajectory
-            self.traj_size = len(trajectory)
 
     def add_point(self, point):
         self.points.append(point)
