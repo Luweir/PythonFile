@@ -30,14 +30,17 @@ def generate_origin_trajectory(data):
 
 def output_compressed_trajectory(trajectories):
     data = []
+    all_len = 0
     for trajectory in trajectories:
+        all_len += len(trajectory.points)
         for point in trajectory.points:
             if point.t2 is None:
-                data.append([point.t, point.x, point.y])
+                data.append([int(point.t), round(point.x, 4), round(point.y, 4)])
             else:
-                data.append([point.t, int(point.t2.t)])
-    pd.DataFrame(data).to_csv("output_compressed_trajectory.csv", header=False,
+                data.append([int(point.t), int(point.t2.t)])
+    pd.DataFrame(data).to_csv("output_compressed_trajectory.txt", header=0,
                               index=False)
+    print("压缩后总点数：", all_len)
 
 
 # ped 误差
@@ -81,7 +84,7 @@ if __name__ == '__main__':
     #                 Trajectory(6, generate_trajectory(data1))]
     compressed_trajectories = []
     for trajectory in trajectories:
-        mtc_add(trajectory, compressed_trajectories, 1500)
+        mtc_add(trajectory, compressed_trajectories, 260)
     output_compressed_trajectory(compressed_trajectories)
     trajectories = [generate_origin_trajectory(pd.read_csv("output_origin_trajectory_0.csv", header=None)),
                     generate_origin_trajectory(pd.read_csv("output_origin_trajectory_1.csv", header=None)),

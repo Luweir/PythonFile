@@ -23,20 +23,25 @@ def get_PED_error(point, sample):
     point_index = 0
     sum_ped_error = 0
     while sample_index < len(sample):
-        if right_point[1] != left_point[1] and right_point[2] != left_point[2]:
-            # 如果当前点在简化后的两点之间
-            while left_point[0] <= point[point_index][0] <= right_point[0]:
-                cur_point = point[point_index]
-                # 计算PED误差
+        # 如果当前点在简化后的两点之间
+        while left_point[0] <= point[point_index][0] <= right_point[0]:
+            if point_index < len(point) and point[point_index][0] == right_point[0]:
+                break
+            cur_point = point[point_index]
+            # 计算PED误差
+            ped_error = 0
+            if left_point[1] == right_point[1] and left_point[2] == right_point[2]:
+                ped_error = math.sqrt((left_point[1] - cur_point[1]) ** 2 + (left_point[2] - right_point[2]) ** 2)
+            else:
                 ped_error = abs(
                     (right_point[2] - left_point[2]) * cur_point[1] - (right_point[1] - left_point[1]) * cur_point[2] +
                     right_point[1] * left_point[2] - right_point[2] * left_point[1]) / math.sqrt(
                     (right_point[2] - left_point[2]) ** 2 + (right_point[1] - left_point[1]) ** 2)
-                sum_ped_error += ped_error
-                max_ped_error = max(max_ped_error, ped_error)
-                point_index += 1
-                if point_index >= len(point):
-                    return [sum_ped_error / len(point), max_ped_error]
+            sum_ped_error += ped_error
+            max_ped_error = max(max_ped_error, ped_error)
+            point_index += 1
+            if point_index >= len(point):
+                return [sum_ped_error / len(point), max_ped_error]
         sample_index += 1
         if sample_index >= len(sample):
             break

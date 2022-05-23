@@ -49,7 +49,7 @@ def output_compressed_trajectory(trajectories):
                 data.append([trajectory.points[i].t - start_time,
                              (int(trajectory.refe_time[i]) - refe_start_time) if i < len(trajectory.refe_time) else 0])
                 i += 1
-    pd.DataFrame(data).to_csv("output_compressed_trajectory.csv", header=False,
+    pd.DataFrame(data).to_csv("output_compressed_trajectory.txt", header=False,
                               index=False)
 
 
@@ -88,7 +88,7 @@ def restore_trajectory_ped_error(trajectory, hash_map):
 
 
 if __name__ == '__main__':
-    data1 = pd.read_csv("../../data/10.9.csv", header=None)
+    # data1 = pd.read_csv("../../data/10.9.csv", header=None)
     # data2 = pd.read_csv("../../data/10.9.csv", header=None)
     # data3 = pd.read_csv("../../data/10.11.csv", header=None)
     trajectories = [Trajectory(0, generate_trajectory(pd.read_csv("output_origin_trajectory_0.csv", header=None))),
@@ -107,17 +107,17 @@ if __name__ == '__main__':
     #                 Trajectory(5, generate_trajectory(data1)),
     #                 Trajectory(6, generate_trajectory(data1))]
     print(trajectories)
-    group = trajStore_cluster(trajectories, 300)
-    # print(group)
+    group = trajStore_cluster(trajectories,1500)
+    print(group)
     # output_origin_trajectory(trajectories)
-    # output_compressed_trajectory(trajectories)
-    # hash_map = {}
-    # for trajectory in trajectories:
-    #     if trajectory.refe_traj_id == -1:
-    #         hash_map[trajectory.traj_id] = trajectory
-    # total_ped = 0
-    # for trajectory in trajectories:
-    #     ped = restore_trajectory_ped_error(trajectory, hash_map)
-    #     total_ped += ped
-    # print("ped error:", total_ped / len(trajectories))
-    # print("max ped error:", max_ped_error)
+    output_compressed_trajectory(trajectories)
+    hash_map = {}
+    for trajectory in trajectories:
+        if trajectory.refe_traj_id == -1:
+            hash_map[trajectory.traj_id] = trajectory
+    total_ped = 0
+    for trajectory in trajectories:
+        ped = restore_trajectory_ped_error(trajectory, hash_map)
+        total_ped += ped
+    print("ped error:", total_ped / len(trajectories))
+    print("max ped error:", max_ped_error)

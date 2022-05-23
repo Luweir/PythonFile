@@ -37,6 +37,10 @@ def get_haversine(point_a, point_b):
     return EARTH_RADIUS * c
 
 
+def euc_dist(p1, p2):
+    return round(math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2), 5)
+
+
 def generateTestTrajectories():
     # ts1 = [560.0, 652.0, 543.0, 651.0, 526.0, 649.0, 510.0, 647.0, 494.0, 644.0, 477.0, 639.0, 460.0, 632.0, 446.0, 622.0, 431.0, 611.0, 417.0, 604.0, 400.0, 597.0, 383.0, 587.0, 372.0, 579.0, 363.0, 573.0, 355.0, 563.0, 356.0, 552.0, 361.0, 537.0, 370.0, 523.0, 380.0, 510.0, 391.0, 498.0, 404.0, 485.0, 415.0, 475.0, 429.0, 466.0, 444.0, 459.0, 465.0, 451.0, 493.0, 442.0, 530.0, 432.0, 568.0, 423.0, 606.0, 417.0, 644.0, 412.0, 681.0, 408.0, 714.0, 404.0, 747.0, 401.0, 770.0, 399.0, 793.0, 397.0, 818.0, 395.0]
     ts2 = [565.0, 689.0, 547.0, 682.0, 525.0, 674.0, 502.0, 668.0, 480.0, 663.0, 452.0, 660.0, 424.0, 656.0, 400.0,
@@ -69,10 +73,10 @@ def plt_cluster_seg(norm_cluster, num):
     seg_line_x = []
     seg_line_y = []
     for seg in cluster_cur:
-        seg_line_x.append(seg.start.x / 100)
-        seg_line_x.append(seg.end.x / 100)
-        seg_line_y.append(seg.start.y / 100)
-        seg_line_y.append(seg.end.y / 100)
+        seg_line_x.append(seg.start.x)
+        seg_line_x.append(seg.end.x)
+        seg_line_y.append(seg.start.y)
+        seg_line_y.append(seg.end.y)
     fig = plt.figure(figsize=(9, 6))
     ax = fig.add_subplot(111)
     index = 0
@@ -94,7 +98,7 @@ class cluster_point:
 
 
 # ------------------------------------- 簇内段压缩---------------
-def cluster_HAC(norm_cluster, t=25000):
+def cluster_HAC(norm_cluster, t=3.0):
     # 最终所有聚簇 点聚类结果
     # point_cluster_result = []
     # 对于每一个聚簇：
@@ -108,14 +112,16 @@ def cluster_HAC(norm_cluster, t=25000):
         # 一、运行凝聚型层次聚类  将簇内所有点凝聚聚类   保证类内误差距离
         point_list = []
         data = []
+        # 注意可能有连续段  到时候还要用集合!!!!!l
         for seg in cluster:
             point_list.append(seg.start)
             point_list.append(seg.end)
             data.append([seg.start.x, seg.start.y])
             data.append([seg.end.x, seg.end.y])
         data = np.array(data)
-        data_zs = 1.0 * data / data.max()  # 归一化
-        mergings = linkage(data_zs, method='complete', metric=get_haversine)
+        print(data)
+        # data_zs = 1.0 * data / data.max()  # 归一化
+        mergings = linkage(data, method='complete', metric="euclidean")
 
         point_index = [i for i in range(len(point_list))]
         # plt.figure(figsize=(9, 7))
@@ -174,7 +180,7 @@ if __name__ == '__main__':
 
     # ------------------------------------  start my data testing---------------------
     # DP 算法的阈值
-    epsilon = 0.5
+    epsilon = 260
     trajs = []
     parts = []
     for i in range(7):
@@ -183,11 +189,11 @@ if __name__ == '__main__':
                            sep=',').values.tolist()
         start_time = data[0][0]
         for ele in data:
-            traj.append(Point(ele[1] * 100, ele[2] * 100, traj_id=i, t=int(ele[0] - start_time)))
+            traj.append(Point(ele[1], ele[2], traj_id=i, t=int(ele[0] - start_time)))
         # print(points)
         # runPartition(traj, 6.0, 5.0)
         print("原始轨迹长度：", len(traj))
-        part = rdp_trajectory_partitioning(traj, traj_id=i, epsilon=epsilon)
+        part = rdp_trajectory_partitioning(traj, traj_id=i, epsilon=epsilon / 100000)
         trajs.append(traj)
         parts.append(part)
     # -----------------------------------------  end my data testing -------------------
@@ -197,102 +203,129 @@ if __name__ == '__main__':
     print("一共多少轨迹段:", len(all_segs))
 
     # -----------------------------------输出未聚类之前的 start---------------------------------------
-    new_traj = []
+    dp_traj = []
     for part in parts:
         for ele in part:
-            new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100), 4])
-        new_traj.append([part[-1].end.time, round(part[-1].end.x / 100, 4), round(part[-1].end.y / 100, 4)])
-    pd.DataFrame(new_traj).to_csv("before_point_clusting.csv", index=False, header=0)
-    # ----------------------------------输出未聚类之前的 end--------------------------------------
+            dp_traj.append([int(ele.start.time), round(ele.start.x, 4), round(ele.start.y, 4)])
+        dp_traj.append([int(part[-1].end.time), round(part[-1].end.x, 4), round(part[-1].end.y, 4)])
+    pd.DataFrame(dp_traj).to_csv("before_point_clusting.txt", index=False, header=0)
 
-    # 进行点的聚类
-    # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
-    norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=10)
-    for k, v in remove_cluster.items():
-        print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
-    cluster_HAC(norm_cluster, t=100)
-
-    # -------------------------------------输出聚类之后的 start -----------------------------------
-    new_traj = []
-    for part in parts:
-        for ele in part:
-            new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100, 4)])
-        new_traj.append([part[-1].end.time, round(part[-1].end.x / 100, 4), round(part[-1].end.y / 100, 4)])
-    pd.DataFrame(new_traj).to_csv("output.csv", index=False, header=0)
-
-    # -------------------------------------输出聚类之后的 end---------------------------------------
-
-    # -------------------------------------测试误差 start-------------------------------------
+    old_trajs = []
+    for i in range(7):
+        data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_" + str(i) + ".csv", header=None,
+                           sep=',').values.tolist()
+        traj = []
+        for ele in data:
+            traj.append([int(ele[0]), ele[1], ele[2]])
+        old_trajs.append(traj)
     average_ped_error = 0
     max_ped_error = 0
     for i in range(7):
-        old_traj = []
-        for ele in trajs[i]:
-            old_traj.append([ele.time, ele.x / 100, ele.y / 100])
         new_traj = []
         for ele in parts[i]:
-            new_traj.append([ele.start.time, round(ele.start.x / 100, 4), round(ele.start.y / 100, 4)])
-        new_traj.append([parts[i][-1].end.time, round(parts[i][-1].end.x / 100, 4), round(parts[i][-1].end.y / 100, 4)])
-        a, b = compare.get_PED_error(old_traj, new_traj)
+            new_traj.append([int(ele.start.time), round(ele.start.x, 4), round(ele.start.y, 4)])
+        new_traj.append([int(parts[i][-1].end.time), round(parts[i][-1].end.x, 4), round(parts[i][-1].end.y, 4)])
+        a, b = compare.get_PED_error(old_trajs[i], new_traj)
         print("[traj" + str(i) + "] average PED error: ", a, ", max_ped_error: ", b)
         average_ped_error += a
         max_ped_error = max(max_ped_error, b)
     print("total： average ped error：", average_ped_error / 7, ", max_ped_error: ", max_ped_error)
-    # print("traj1 SED error: ", compare.get_SED_error(old_traj, new_traj))
-
-    # -------------------------------------测试误差 end---------------------------------------
-    # 作图
-    # cluster_s_x, cluster_s_y = [], []
-    # for k, v in norm_cluster.items():
-    #     cluster_s_x.extend([s.start.x for s in v])
-    #     cluster_s_x.extend([s.end.x for s in v])
-    #     cluster_s_y.extend([s.start.y for s in v])
-    #     cluster_s_y.extend([s.end.y for s in v])
-    #     print("using cluster: the cluster %d, the segment number %d" % (k, len(v)))
+    # # ----------------------------------输出未聚类之前的 end--------------------------------------
     #
-    # source_line_x_1 = [p.x for p in traj1]
-    # source_line_y_1 = [p.y for p in traj1]
+    # # 进行点的聚类
+    # # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
+    # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=0.01)
+    # for k, v in remove_cluster.items():
+    #     print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
+    # cluster_HAC(norm_cluster, t=epsilon / 100000.0)
     #
-    # source_line_x_2 = [p.x for p in traj2]
-    # source_line_y_2 = [p.y for p in traj2]
+    # # -------------------------------------输出聚类之后的 start -----------------------------------
+    # # new_traj = []
+    # # for part in parts:
+    # #     for ele in part:
+    # #         new_traj.append([ele.start.time, round(ele.start.x  4), round(ele.start.y, 4)])
+    # #     new_traj.append([part[-1].end.time, round(part[-1].end.x , 4), round(part[-1].end.y, 4)])
+    # # pd.DataFrame(new_traj).to_csv("output.csv", index=False, header=0)
     #
-    # source_line_x_3 = [p.x for p in traj3]
-    # source_line_y_3 = [p.y for p in traj3]
+    # # -------------------------------------输出聚类之后的 end---------------------------------------
     #
-    # source_line_x_4 = [p.x for p in traj4]
-    # source_line_y_4 = [p.y for p in traj4]
+    # # -------------------------------------测试误差 start-------------------------------------
+    # old_trajs = []
+    # for i in range(7):
+    #     data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_" + str(i) + ".csv", header=None,
+    #                        sep=',').values.tolist()
+    #     traj = []
+    #     for ele in data:
+    #         traj.append([int(ele[0]), ele[1], ele[2]])
+    #     old_trajs.append(traj)
     #
-    # fig = plt.figure(figsize=(9, 6))
-    # ax = fig.add_subplot(111)
-    # ax.plot(source_line_x_1, source_line_y_1, 'g--', lw=2.0, label="trajectory 1")
-    # ax.scatter(source_line_x_1, source_line_y_1, c='g', alpha=0.5)
-    # ax.plot(source_line_x_2, source_line_y_2, 'r--', lw=2.0, label="trajectory 2")
-    # ax.scatter(source_line_x_2, source_line_y_2, c='r', alpha=0.5)
-    # ax.plot(source_line_x_3, source_line_y_3, 'b--', lw=2.0, label="trajectory 3")
-    # ax.scatter(source_line_x_3, source_line_y_3, c='b', alpha=0.5)
-    # ax.plot(source_line_x_4, source_line_y_4, 'y--', lw=2.0, label="trajectory 4")
-    # ax.scatter(source_line_x_4, source_line_y_4, c='y', alpha=0.5)
-    #
-    # for k, v in norm_cluster.items():
-    #     for s in v:
-    #         _x = [s.start.x, s.end.x]
-    #         _y = [s.start.y, s.end.y]
-    #         if s.traj_id == 1:
-    #             ax.plot(_x, _y, c='k', lw=3.0, alpha=0.7)
-    #         elif s.traj_id == 2:
-    #             ax.plot(_x, _y, c='c', lw=3.0, alpha=0.7)
-    #         elif s.traj_id == 3:
-    #             ax.plot(_x, _y, c='m', lw=3.0, alpha=0.7)
-    #         else:
-    #             ax.plot(_x, _y, c='r', lw=3.0, alpha=0.7)
-    # ax.scatter(cluster_s_x, cluster_s_y, c='k', alpha=0.5, s=80, label="cluster")
-    #
-    # main_traj_dict = representative_trajectory_generation(norm_cluster, min_lines=2, min_dist=1.0)
-    # for c, v in main_traj_dict.items():
-    #     v_x = [p.x for p in v]
-    # v_y = [p.y for p in v]
-    # ax.plot(v_x, v_y, 'r-', lw=4.0, label="cluster_%d_main_trajectory" % c)
-    #
-    # ax.legend()
-    # plt.savefig("./figure/trajectory-major.png", dpi=400)
-    # plt.show()
+    # average_ped_error = 0
+    # max_ped_error = 0
+    # for i in range(7):
+    #     new_traj = []
+    #     for ele in parts[i]:
+    #         new_traj.append([int(ele.start.time), round(ele.start.x, 4), round(ele.start.y, 4)])
+    #     new_traj.append([int(parts[i][-1].end.time), round(parts[i][-1].end.x, 4), round(parts[i][-1].end.y, 4)])
+    #     a, b = compare.get_PED_error(old_trajs[i], new_traj)
+    #     print("[traj" + str(i) + "] average PED error: ", a, ", max_ped_error: ", b)
+    #     average_ped_error += a
+    #     max_ped_error = max(max_ped_error, b)
+    # print("total： average ped error：", average_ped_error / 7, ", max_ped_error: ", max_ped_error)
+    # # print("traj1 SED error: ", compare.get_SED_error(old_traj, new_traj))
+    # print(111)
+    # # -------------------------------------测试误差 end---------------------------------------
+    # # 作图
+    # # cluster_s_x, cluster_s_y = [], []
+    # # for k, v in norm_cluster.items():
+    # #     cluster_s_x.extend([s.start.x for s in v])
+    # #     cluster_s_x.extend([s.end.x for s in v])
+    # #     cluster_s_y.extend([s.start.y for s in v])
+    # #     cluster_s_y.extend([s.end.y for s in v])
+    # #     print("using cluster: the cluster %d, the segment number %d" % (k, len(v)))
+    # #
+    # # source_line_x_1 = [p.x for p in traj1]
+    # # source_line_y_1 = [p.y for p in traj1]
+    # #
+    # # source_line_x_2 = [p.x for p in traj2]
+    # # source_line_y_2 = [p.y for p in traj2]
+    # #
+    # # source_line_x_3 = [p.x for p in traj3]
+    # # source_line_y_3 = [p.y for p in traj3]
+    # #
+    # # source_line_x_4 = [p.x for p in traj4]
+    # # source_line_y_4 = [p.y for p in traj4]
+    # #
+    # # fig = plt.figure(figsize=(9, 6))
+    # # ax = fig.add_subplot(111)
+    # # ax.plot(source_line_x_1, source_line_y_1, 'g--', lw=2.0, label="trajectory 1")
+    # # ax.scatter(source_line_x_1, source_line_y_1, c='g', alpha=0.5)
+    # # ax.plot(source_line_x_2, source_line_y_2, 'r--', lw=2.0, label="trajectory 2")
+    # # ax.scatter(source_line_x_2, source_line_y_2, c='r', alpha=0.5)
+    # # ax.plot(source_line_x_3, source_line_y_3, 'b--', lw=2.0, label="trajectory 3")
+    # # ax.scatter(source_line_x_3, source_line_y_3, c='b', alpha=0.5)
+    # # ax.plot(source_line_x_4, source_line_y_4, 'y--', lw=2.0, label="trajectory 4")
+    # # ax.scatter(source_line_x_4, source_line_y_4, c='y', alpha=0.5)
+    # #
+    # # for k, v in norm_cluster.items():
+    # #     for s in v:
+    # #         _x = [s.start.x, s.end.x]
+    # #         _y = [s.start.y, s.end.y]
+    # #         if s.traj_id == 1:
+    # #             ax.plot(_x, _y, c='k', lw=3.0, alpha=0.7)
+    # #         elif s.traj_id == 2:
+    # #             ax.plot(_x, _y, c='c', lw=3.0, alpha=0.7)
+    # #         elif s.traj_id == 3:
+    # #             ax.plot(_x, _y, c='m', lw=3.0, alpha=0.7)
+    # #         else:
+    # #             ax.plot(_x, _y, c='r', lw=3.0, alpha=0.7)
+    # # ax.scatter(cluster_s_x, cluster_s_y, c='k', alpha=0.5, s=80, label="cluster")
+    # #
+    # # main_traj_dict = representative_trajectory_generation(norm_cluster, min_lines=2, min_dist=1.0)
+    # # for c, v in main_traj_dict.items():
+    # #     v_x = [p.x for p in v]
+    # # v_y = [p.y for p in v]
+    # # ax.plot(v_x, v_y, 'r-', lw=4.0, label="cluster_%d_main_trajectory" % c)
+    # #
+    # # ax.legend()
+    # # plt.savefig("./figure/trajectory-major.png", dpi=400)
+    # # plt.show()

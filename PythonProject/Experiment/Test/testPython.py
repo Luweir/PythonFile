@@ -7,11 +7,7 @@ import sys
 import pickle
 
 import importlib
-
+def euc_dist(p1, p2):
+    return round(math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2), 5)
 if __name__ == '__main__':
-    l = [1, 2, 3]
-    r = l
-    r[0]=5
-    r = [2, 3, 4]
-    print(l)
-    print(r)
+    print(euc_dist([40.0638,116.599],[40.0119,116.6055]))

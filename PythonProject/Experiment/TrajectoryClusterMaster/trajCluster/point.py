@@ -86,3 +86,7 @@ def _point2line_distance(point, start, end):
         return np.linalg.norm(point - start)
     return np.divide(np.abs(np.linalg.norm(np.cross(end - start, start - point))),
                      np.linalg.norm(end - start))
+
+
+if __name__ == '__main__':
+    print(_point2line_distance(Point(40.0119,116.6055, 1, 62).as_array(), Point(40.0638,116.599, 1, 0).as_array(), Point(39.9992, 116.6081, 1, 81).as_array()))
