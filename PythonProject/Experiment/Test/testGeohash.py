@@ -4,7 +4,7 @@ import Experiment.Test.geo_hash as gh
 import pandas as pd
 
 if __name__ == '__main__':
-    data = pd.read_csv("../data/10.9.csv", usecols=[0, 1, 2])
+    data = pd.read_csv("../data/AirlineData/10.9.csv", usecols=[0, 1, 2])
     data = np.array(data)
     latitude = np.array(data[:, 1])
     longitude = np.array(data[:, 2])

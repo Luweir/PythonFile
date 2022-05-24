@@ -10,12 +10,12 @@
 # --------------------------------------------------------------------------------
 import pandas as pd
 
-from Experiment.DP.dp import gps_reader
-from Experiment.TrajectoryClusterMaster.trajCluster.partition import approximate_trajectory_partitioning, \
+from Experiment.TrajectoryClusterMaster.trajCluster import approximate_trajectory_partitioning, \
     segment_mdl_comp, rdp_trajectory_partitioning
-from Experiment.TrajectoryClusterMaster.trajCluster.point import Point
 
 from matplotlib import pyplot as plt
+
+from Experiment.common.Point import Point
 
 
 def generateTestTrajectory():
@@ -107,6 +107,7 @@ def runPartition(traj, theta=6.0, epsilon=5.0):
     plt.savefig('./figure/trajectory_rdp_eps_5.png')
     plt.show()
     return part
+
 
 if __name__ == '__main__':
     traj = generateTestTrajectory()

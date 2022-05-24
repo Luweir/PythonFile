@@ -12,14 +12,12 @@ import math
 import numpy as np
 import pandas as pd
 
-from Experiment.TrajectoryClusterMaster.trajCluster.partition import approximate_trajectory_partitioning, \
-    segment_mdl_comp, rdp_trajectory_partitioning
-from Experiment.TrajectoryClusterMaster.trajCluster.point import Point
-from Experiment.TrajectoryClusterMaster.trajCluster.cluster import line_segment_clustering, \
-    representative_trajectory_generation
-from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+from Experiment.TrajectoryClusterMaster.trajCluster import rdp_trajectory_partitioning, line_segment_clustering
+from Experiment.common.Point import Point
+from scipy.cluster.hierarchy import linkage, fcluster
 from matplotlib import pyplot as plt
 import Experiment.compare.compare as compare
+from Experiment.data.DataProcess.data_process import get_trajectories
 
 EARTH_RADIUS = 6371229  # m 用于两点间距离计算
 
@@ -142,17 +140,17 @@ def cluster_HAC(norm_cluster, t=3.0):
         for ele in temp_cluster_list:
             center_x = 0
             center_y = 0
-            time_dict = {}
+            t_dict = {}
             for e in ele:
                 center_x += e.x
                 center_y += e.y
-                time_dict[e.trajectory_id] = e.time
+                t_dict[e.trajectory_id] = e.t
             center_x = center_x / len(ele)
             center_y = center_y / len(ele)
             for e in ele:
                 e.x = center_x
                 e.y = center_y
-            # point_cluster_result.append(cluster_point(center_x, center_y, time_dict))
+            # point_cluster_result.append(cluster_point(center_x, center_y, t_dict))
         cluster_id += 1
     # return point_cluster_result
 
@@ -181,20 +179,18 @@ if __name__ == '__main__':
     # ------------------------------------  start my data testing---------------------
     # DP 算法的阈值
     epsilon = 260
-    trajs = []
+    trajectories = []
     parts = []
+    path = r'E:\Desktop\Programmer\PythonFile\PythonProject\Experiment\data\SyntheticData'
     for i in range(7):
-        traj = []  # Track points set
-        data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_" + str(i) + ".csv", header=None,
+        trajectory = []  # Track points set
+        data = pd.read_csv(path + r"\output_origin_trajectory_" + str(i) + ".csv", header=None,
                            sep=',').values.tolist()
-        start_time = data[0][0]
         for ele in data:
-            traj.append(Point(ele[1], ele[2], traj_id=i, t=int(ele[0] - start_time)))
-        # print(points)
-        # runPartition(traj, 6.0, 5.0)
-        print("原始轨迹长度：", len(traj))
-        part = rdp_trajectory_partitioning(traj, traj_id=i, epsilon=epsilon / 100000)
-        trajs.append(traj)
+            trajectory.append(Point(x=ele[1], y=ele[2], trajectory_id=i, t=int(ele[0])))
+        print("原始轨迹长度：", len(trajectory))
+        part = rdp_trajectory_partitioning(trajectory, traj_id=i, epsilon=epsilon / 100000)
+        trajectories.append(trajectory)
         parts.append(part)
     # -----------------------------------------  end my data testing -------------------
     all_segs = []
@@ -206,74 +202,59 @@ if __name__ == '__main__':
     dp_traj = []
     for part in parts:
         for ele in part:
-            dp_traj.append([int(ele.start.time), round(ele.start.x, 4), round(ele.start.y, 4)])
-        dp_traj.append([int(part[-1].end.time), round(part[-1].end.x, 4), round(part[-1].end.y, 4)])
+            dp_traj.append([int(ele.start.t), round(ele.start.x, 4), round(ele.start.y, 4)])
+        dp_traj.append([int(part[-1].end.t), round(part[-1].end.x, 4), round(part[-1].end.y, 4)])
     pd.DataFrame(dp_traj).to_csv("before_point_clusting.txt", index=False, header=0)
 
-    old_trajs = []
-    for i in range(7):
-        data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_" + str(i) + ".csv", header=None,
-                           sep=',').values.tolist()
-        traj = []
-        for ele in data:
-            traj.append([int(ele[0]), ele[1], ele[2]])
-        old_trajs.append(traj)
+    old_trajs = get_trajectories(trajectory_type="point_list")
     average_ped_error = 0
     max_ped_error = 0
     for i in range(7):
         new_traj = []
         for ele in parts[i]:
-            new_traj.append([int(ele.start.time), round(ele.start.x, 4), round(ele.start.y, 4)])
-        new_traj.append([int(parts[i][-1].end.time), round(parts[i][-1].end.x, 4), round(parts[i][-1].end.y, 4)])
+            new_traj.append(Point(round(ele.start.x, 4), round(ele.start.y, 4), t=int(ele.start.t)))
+        new_traj.append(Point(round(parts[i][-1].end.x, 4), round(parts[i][-1].end.y, 4), t=int(parts[i][-1].end.t)))
         a, b = compare.get_PED_error(old_trajs[i], new_traj)
         print("[traj" + str(i) + "] average PED error: ", a, ", max_ped_error: ", b)
         average_ped_error += a
         max_ped_error = max(max_ped_error, b)
     print("total： average ped error：", average_ped_error / 7, ", max_ped_error: ", max_ped_error)
     # # ----------------------------------输出未聚类之前的 end--------------------------------------
-    #
-    # # 进行点的聚类
-    # # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
-    # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=0.01)
-    # for k, v in remove_cluster.items():
-    #     print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
-    # cluster_HAC(norm_cluster, t=epsilon / 100000.0)
-    #
+
+    # 进行点的聚类
+    # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
+    norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=0.01)
+    for k, v in remove_cluster.items():
+        print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
+    cluster_HAC(norm_cluster, t=epsilon / 100000.0)
+
     # # -------------------------------------输出聚类之后的 start -----------------------------------
     # # new_traj = []
     # # for part in parts:
     # #     for ele in part:
-    # #         new_traj.append([ele.start.time, round(ele.start.x  4), round(ele.start.y, 4)])
-    # #     new_traj.append([part[-1].end.time, round(part[-1].end.x , 4), round(part[-1].end.y, 4)])
+    # #         new_traj.append([ele.start.t, round(ele.start.x  4), round(ele.start.y, 4)])
+    # #     new_traj.append([part[-1].end.t, round(part[-1].end.x , 4), round(part[-1].end.y, 4)])
     # # pd.DataFrame(new_traj).to_csv("output.csv", index=False, header=0)
     #
     # # -------------------------------------输出聚类之后的 end---------------------------------------
     #
-    # # -------------------------------------测试误差 start-------------------------------------
-    # old_trajs = []
-    # for i in range(7):
-    #     data = pd.read_csv("../../TrajStore/Test/output_origin_trajectory_" + str(i) + ".csv", header=None,
-    #                        sep=',').values.tolist()
-    #     traj = []
-    #     for ele in data:
-    #         traj.append([int(ele[0]), ele[1], ele[2]])
-    #     old_trajs.append(traj)
-    #
-    # average_ped_error = 0
-    # max_ped_error = 0
-    # for i in range(7):
-    #     new_traj = []
-    #     for ele in parts[i]:
-    #         new_traj.append([int(ele.start.time), round(ele.start.x, 4), round(ele.start.y, 4)])
-    #     new_traj.append([int(parts[i][-1].end.time), round(parts[i][-1].end.x, 4), round(parts[i][-1].end.y, 4)])
-    #     a, b = compare.get_PED_error(old_trajs[i], new_traj)
-    #     print("[traj" + str(i) + "] average PED error: ", a, ", max_ped_error: ", b)
-    #     average_ped_error += a
-    #     max_ped_error = max(max_ped_error, b)
-    # print("total： average ped error：", average_ped_error / 7, ", max_ped_error: ", max_ped_error)
-    # # print("traj1 SED error: ", compare.get_SED_error(old_traj, new_traj))
-    # print(111)
-    # # -------------------------------------测试误差 end---------------------------------------
+    # -------------------------------------测试误差 start-------------------------------------
+    old_trajectories = get_trajectories(trajectory_type="point_list")
+
+    average_ped_error = 0
+    max_ped_error = 0
+    for i in range(7):
+        new_traj = []
+        for ele in parts[i]:
+            new_traj.append(Point(x=round(ele.start.x, 4), y=round(ele.start.y, 4), t=int(ele.start.t)))
+        new_traj.append(
+            Point(x=round(parts[i][-1].end.x, 4), y=round(parts[i][-1].end.y, 4), t=int(parts[i][-1].end.t)))
+        a, b = compare.get_PED_error(old_trajectories[i], new_traj)
+        print("[traj" + str(i) + "] average PED error: ", a, ", max_ped_error: ", b)
+        average_ped_error += a
+        max_ped_error = max(max_ped_error, b)
+    print("total： average ped error：", average_ped_error / 7, ", max_ped_error: ", max_ped_error)
+    # -------------------------------------测试误差 end---------------------------------------
     # # 作图
     # # cluster_s_x, cluster_s_y = [], []
     # # for k, v in norm_cluster.items():

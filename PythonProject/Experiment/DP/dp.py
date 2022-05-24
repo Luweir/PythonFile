@@ -1,7 +1,11 @@
 import time
 import math
+
+from typing import List
+
 import Experiment.compare.compare as cr
 import pandas as pd
+from Experiment.common.Point import Point
 
 
 # 加载数据集
@@ -36,13 +40,20 @@ def get_sed(s, m, e):
     return math.sqrt(lat_diff * lat_diff + lon_diff * lon_diff)
 
 
-# dp
-def douglas_peucker(points, start, last, epsilon):
+def douglas_peucker(points: List[Point], start: int, last: int, epsilon: float):
+    """
+        DP 算法
+    :param points:
+    :param start:
+    :param last:
+    :param epsilon: 误差阈值  epsilon为欧氏距离   epsilon*100000≈实际距离
+    :return: 简化后的索引序列
+    """
     d_max = 0
     index = start
     rec_result = []
     for i in range(start + 1, last):
-        d = get_ped(points[start], points[i], points[last])
+        d = points[i].get_ped(points[start], points[last])
         if d > d_max:
             index = i
             d_max = d

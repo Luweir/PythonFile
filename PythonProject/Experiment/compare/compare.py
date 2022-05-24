@@ -1,8 +1,11 @@
+from typing import List
+
 import pandas as pd
 import math
 import numpy as np
 import Experiment.FastDTW.fast_dtw_neigbors as dtw
 import Experiment.Threshold.threshold as threshold
+from Experiment.common.Point import Point
 
 
 def get_CR_and_time(save_filename, start_time, end_time, points, sample):
@@ -15,7 +18,7 @@ def get_CR_and_time(save_filename, start_time, end_time, points, sample):
     print("compress ratio: " + str(len(points) / len(sample)))
 
 
-def get_PED_error(point, sample):
+def get_PED_error(point: List[Point], sample: List[Point]):
     max_ped_error = 0
     left_point = sample[0]
     sample_index = 1
@@ -24,22 +27,17 @@ def get_PED_error(point, sample):
     sum_ped_error = 0
     while sample_index < len(sample):
         # 如果当前点在简化后的两点之间
-        while left_point[0] <= point[point_index][0] <= right_point[0]:
-            if point_index < len(point) and point[point_index][0] == right_point[0]:
+        while left_point.t <= point[point_index].t <= right_point.t:
+            if point_index < len(point) and point[point_index].t == right_point.t:
                 break
             cur_point = point[point_index]
-            # 计算PED误差
-            if left_point[1] == right_point[1] and left_point[2] == right_point[2]:
-                ped_error = math.sqrt((left_point[1] - cur_point[1]) ** 2 + (left_point[2] - right_point[2]) ** 2)
+            # 计算PED误差 如果左右点位置相同 那么 就计算cur_point与他们的点的距离
+            if left_point.x == right_point.x and left_point.y == right_point.y:
+                ped_error = cur_point.distance(left_point)
             else:
-                ped_error = abs(
-                    (right_point[2] - left_point[2]) * cur_point[1] - (right_point[1] - left_point[1]) * cur_point[2] +
-                    right_point[1] * left_point[2] - right_point[2] * left_point[1]) / math.sqrt(
-                    (right_point[2] - left_point[2]) ** 2 + (right_point[1] - left_point[1]) ** 2)
+                ped_error = cur_point.get_ped(left_point, right_point)
             sum_ped_error += ped_error
             max_ped_error = max(max_ped_error, ped_error)
-            if max_ped_error > 0.003:
-                print(111)
             point_index += 1
             if point_index >= len(point):
                 return [sum_ped_error / len(point), max_ped_error]
@@ -48,7 +46,6 @@ def get_PED_error(point, sample):
             break
         left_point = right_point
         right_point = sample[sample_index]
-    print(sum_ped_error)
     return [sum_ped_error / len(point), max_ped_error]
 
 

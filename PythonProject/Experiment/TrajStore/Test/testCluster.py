@@ -12,18 +12,7 @@ import random
 from Experiment.common.Point import Point
 from Experiment.common.Trajectory import Trajectory
 from Experiment.compare.compare import get_PED_error
-
-
-def generate_trajectory(data):
-    trajectory = []
-    for i in range(len(data)):
-        # trajectory.append(Point(data.iloc[i][1] + random.uniform(-0.001, 0.001),
-        #                         data.iloc[i][2] + random.uniform(-0.001, 0.001),
-        #                         data.iloc[i][0] + random.randint(-5, 5)))
-        trajectory.append(Point(x=data.iloc[i][1],
-                                y=data.iloc[i][2],
-                                t=data.iloc[i][0]))
-    return trajectory
+from Experiment.data.DataProcess.data_process import get_trajectories
 
 
 def output_origin_trajectory(trajectories):
@@ -63,7 +52,7 @@ def get_traj_store_ped_error(origin_trajectory: Trajectory, compressed_trajector
     """
     # 无参考轨迹
     if compressed_trajectory.reference_trajectory_id == -1:
-        return get_PED_error(origin_trajectory.to_list(), compressed_trajectory.to_list())
+        return get_PED_error(origin_trajectory.points, compressed_trajectory.points)
     # 有参考轨迹 则进行轨迹恢复   先把参考的点给恢复，然后再进行ped误差计算
     reference_trajectory = hash_map[compressed_trajectory.reference_trajectory_id]
     for i in range(len(compressed_trajectory.reference_time)):
@@ -84,9 +73,9 @@ def get_traj_store_ped_error(origin_trajectory: Trajectory, compressed_trajector
                 compressed_trajectory.points[i].x = estimation_point.x
                 compressed_trajectory.points[i].y = estimation_point.y
                 break
-    return get_PED_error(origin_trajectory.to_list(), compressed_trajectory.to_list())
+    return get_PED_error(origin_trajectory.points, compressed_trajectory.points)
 
-# 这里有问题
+
 def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
     """
     对 trajectories 进行线性消除无关点
@@ -97,6 +86,7 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
     linear_eliminate_trajectories = []
     for trajectory in trajectories:
         new_trajectory_points = []
+        new_trajectory_points.append(trajectory.points[0])
         first_index = 0
         last_index = first_index + 1
         while last_index < len(trajectory.points):
@@ -106,12 +96,13 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
             for mid_index in range(first_index + 1, last_index):
                 mid_point = trajectory.points[mid_index]
                 temp_point = mid_point.linear_prediction(first_point, last_point)
+                # print(first_index, last_index, "distance", mid_point.distance(temp_point), ", epsilon", epsilon)
                 if mid_point.distance(temp_point) > epsilon:
                     flag = False
                     break
             if not flag or last_index == len(trajectory.points) - 1:
-                new_trajectory_points.append(first_point)
-                first_index = last_index
+                new_trajectory_points.append(trajectory.points[last_index - 1])
+                first_index = last_index - 1
             last_index += 1
         # 加入最后一个点
         new_trajectory_points.append(trajectory.points[-1])
@@ -120,30 +111,13 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
 
 
 if __name__ == '__main__':
-    # data1 = pd.read_csv("../../data/10.9.csv", header=None)
-    origin_trajectories = [
-        Trajectory(0, generate_trajectory(pd.read_csv("output_origin_trajectory_0.csv", header=None))),
-        Trajectory(1, generate_trajectory(pd.read_csv("output_origin_trajectory_1.csv", header=None))),
-        # Trajectory(2, generate_trajectory(pd.read_csv("output_origin_trajectory_2.csv", header=None))),
-        # Trajectory(3, generate_trajectory(pd.read_csv("output_origin_trajectory_3.csv", header=None))),
-        # Trajectory(4, generate_trajectory(pd.read_csv("output_origin_trajectory_4.csv", header=None))),
-        # Trajectory(5, generate_trajectory(pd.read_csv("output_origin_trajectory_5.csv", header=None))),
-        # Trajectory(6, generate_trajectory(pd.read_csv("output_origin_trajectory_6.csv", header=None)))
-    ]
-    # trajectories = [Trajectory(0, generate_trajectory(data1)),
-    #                 Trajectory(1, generate_trajectory(data1)),
-    #                 Trajectory(2, generate_trajectory(data1)),
-    #                 Trajectory(3, generate_trajectory(data1)),
-    #                 Trajectory(4, generate_trajectory(data1)),
-    #                 Trajectory(5, generate_trajectory(data1)),
-    #                 Trajectory(6, generate_trajectory(data1))]
-    # print(trajectories)
-    epsilon = 200
+    origin_trajectories = get_trajectories()
+    epsilon = 400
     # 第一部分 线性法消除无关点
-    linear_eliminate_trajectories = linear_eliminate(origin_trajectories, epsilon / 100000.0)
+    linear_eliminate_trajectories = linear_eliminate(origin_trajectories, 0.5 * epsilon / 100000.0)
     # linear_eliminate_trajectories = copy.deepcopy(origin_trajectories)
     # 第二部分 聚类压缩
-    group = traj_store_cluster(linear_eliminate_trajectories, epsilon)
+    group = traj_store_cluster(linear_eliminate_trajectories, 0.25 * epsilon)
 
     # output_origin_trajectory(trajectories)
     output_compressed_trajectory(linear_eliminate_trajectories)

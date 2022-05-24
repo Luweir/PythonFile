@@ -11,7 +11,7 @@
 from typing import Tuple
 import math
 
-from .point import Point, _point2line_distance
+from Experiment.common.Point import Point
 
 
 class Segment(object):
@@ -62,12 +62,14 @@ class Segment(object):
 
         # 当两个点重合时, 计算点到直线的距离即可
         if self_dist < self.eps:
-            return _point2line_distance(self.start.as_array(), other.start.as_array(), other.end.as_array())
+            return self.start.point2line_distance(other.start, other.end)
+            # return _point2line_distance(self.start.as_array(), other.start.as_array(), other.end.as_array())
         elif other_dist < self.eps:
-            return _point2line_distance(other.start.as_array(), self.start.as_array(), self.end.as_array())
+            return other.start.point2line_distance(self.start, self.end)
+            # return _point2line_distance(other.start.as_array(), self.start.as_array(), self.end.as_array())
 
         cos_theta = self_vector.dot(other.end - other.start) / (
-                    self.end.distance(self.start) * other.end.distance(other.start))
+                self.end.distance(self.start) * other.end.distance(other.start))
         if cos_theta > self.eps:
             if cos_theta >= 1:
                 cos_theta = 1.0

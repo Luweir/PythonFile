@@ -8,8 +8,8 @@
 # date      :2019/4/1 16:05
 # log       :包含修改时间、修改人、修改line及原因
 # --------------------------------------------------------------------------------
-from Experiment.TrajectoryClusterMaster.trajCluster.segment import Segment
-from Experiment.TrajectoryClusterMaster.trajCluster.point import Point
+from Experiment.TrajectoryClusterMaster.trajCluster import Segment
+from Experiment.common.Point import Point
 
 s = Point(1.0, 2.0)
 e = Point(10.0, 2.0)

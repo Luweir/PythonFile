@@ -10,8 +10,10 @@
 # --------------------------------------------------------------------------------
 import math
 
+from typing import List
+
 from .segment import Segment
-from .point import _point2line_distance
+from Experiment.common.Point import Point
 
 eps = 1e-12  # defined the segment length theta, if length < eps then l_h=0
 
@@ -21,7 +23,7 @@ def segment_mdl_comp(traj, start_index, current_index, typed='par'):
     <<Trajectory Clustering: A Partition-and-Group Framework>>中的part3-TRAJECTORY PARTITIONING, 具体公式主要在(6), (7)两个.
     parameter
     ----------
-        traj: List[(t, x, y)], 轨迹数据用列表表示, 轨迹中的一个点通过(time, x, y)的形式来定义
+        traj: List[(t, x, y)], 轨迹数据用列表表示, 轨迹中的一个点通过(t, x, y)的形式来定义
         start_index: int, 开始的索引, 轨迹中的开始索引位置.
         current_index: int, 当前索引位置
         typed: str, 'par' or ‘nopar’两个参数可选, 对应不同的计算结果
@@ -96,7 +98,7 @@ def approximate_trajectory_partitioning(traj, traj_id=None, theta=5.0):
     return partition_trajectory
 
 
-def rdp_trajectory_partitioning(trajectory, traj_id=None, epsilon=1.0):
+def rdp_trajectory_partitioning(trajectory: List[Point], traj_id=None, epsilon=1.0):
     """实现轨迹压缩的Ramer-Douglas-Peucker算法, 实现对轨迹中的重要点进行提取并实现轨迹的分割, 和上面的partition方法的返回结果一致
     parameter
     ---------
@@ -107,7 +109,7 @@ def rdp_trajectory_partitioning(trajectory, traj_id=None, epsilon=1.0):
     d_max = 0.0
     index = 0
     for i in range(1, size - 1, 1):
-        d = _point2line_distance(trajectory[i].as_array(), trajectory[0].as_array(), trajectory[-1].as_array())
+        d = trajectory[i].point2line_distance(trajectory[0], trajectory[-1])
         if d > d_max:
             d_max = d
             index = i

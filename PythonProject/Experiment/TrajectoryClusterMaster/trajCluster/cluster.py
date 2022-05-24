@@ -12,8 +12,9 @@ import copy
 import math
 
 from .segment import compare, Segment
-from .point import Point
 from collections import deque, defaultdict
+
+from ...common.Point import Point
 
 min_traj_cluster = 2  # 定义聚类的簇中至少需要的trajectory数量
 

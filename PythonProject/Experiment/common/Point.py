@@ -4,21 +4,19 @@ import numpy as np
 
 
 class Point(object):
-    """对轨迹中的点进行封装, 可以进行比较, 一些常用的计算, 如距离计算, dot计算等, 本point主要对2维的point进行封装
-    method
-    ------
-        str: 返回point的字符串格式, ‘2.56557800, 1.00000000’
-        +: 加号操作符, 实现两个point类型的相加操作
-        -: 减号操作符, 实现两个point类型的减法运算
-        distance(other): 实现两个Point类型的距离(欧式距离)计算
-        dot(other): 实现两个Point对象的dot运算, 得到两个点的值: x**2 + y**2
-    """
-
-    def __init__(self, x, y, trajectory_id=None, t=None):
+    def __init__(self, x, y, trajectory_id=-1, t=-1):
+        """
+        初始化 Point
+        :param x: x坐标 纬度
+        :param y: y坐标 经度
+        :param trajectory_id: 轨迹 ID
+        :param t: 时间戳 相对于第一个点的相对时间
+        """
         self.trajectory_id = trajectory_id
         self.x = x
         self.y = y
         self.t = t
+        self.p = None  # 指向参考点 即另一个 Point
 
     def __repr__(self):
         return "{0:.8f},{1:.8f}".format(self.x, self.y)
@@ -31,29 +29,32 @@ class Point(object):
             raise TypeError("The other type is not 'Point' type.")
         _add_x = self.x + other.x
         _add_y = self.y + other.y
-        return Point(_add_x, _add_y, traj_id=self.trajectory_id)
+        return Point(_add_x, _add_y, trajectory_id=self.trajectory_id)
 
     def __sub__(self, other: 'Point'):
         if not isinstance(other, Point):
             raise TypeError("The other type is not 'Point' type.")
         _sub_x = self.x - other.x
         _sub_y = self.y - other.y
-        return Point(_sub_x, _sub_y, traj_id=self.trajectory_id)
+        return Point(_sub_x, _sub_y, trajectory_id=self.trajectory_id)
 
     def __mul__(self, x: float):
         if isinstance(x, float):
-            return Point(self.x * x, self.y * x, traj_id=self.trajectory_id)
+            return Point(self.x * x, self.y * x, trajectory_id=self.trajectory_id)
         else:
             raise TypeError("The other object must 'float' type.")
 
     def __truediv__(self, x: float):
         if isinstance(x, float):
-            return Point(self.x / x, self.y / x, traj_id=self.trajectory_id)
+            return Point(self.x / x, self.y / x, trajectory_id=self.trajectory_id)
         else:
             raise TypeError("The other object must 'float' type.")
 
     def dot(self, other: 'Point'):
         return self.x * other.x + self.y * other.y
+
+    def to_list(self):
+        return [self.t, self.x, self.y]
 
     def as_array(self):
         return np.array((self.x, self.y))
@@ -112,8 +113,8 @@ class Point(object):
         :param end: 线段终点
         :return: 预测 self 在线段 start end 之间的位置  返回预测点
         """
-        lx = start.x + (self.t - start.t) / (end.t - end.t) * (end.x - start.x)
-        ly = start.y + (self.t - start.t) / (end.t - end.t) * (end.y - start.y)
+        lx = start.x + (self.t - start.t) / (end.t - start.t) * (end.x - start.x)
+        ly = start.y + (self.t - start.t) / (end.t - start.t) * (end.y - start.y)
         return Point(lx, ly)
 
     def get_haversine(self, other: 'Point') -> float:
@@ -190,6 +191,21 @@ class Point(object):
         x = self.x + (end.x - self.x) * (time - self.t) / (end.t - self.t)
         y = self.y + (end.y - self.y) * (time - self.t) / (end.t - self.t)
         return Point(x, y, t=time)
+
+    def get_ped(self, left: 'Point', right: 'Point') -> float:
+        """
+        返回 self 到线段 left-right 的ped距离  函数功能与 point2line_distance 一致
+        :param left: 线段左端点
+        :param right: 线段右端点
+        :return: ped距离
+        """
+        a = right.y - left.y
+        b = left.x - right.x
+        c = right.x * left.y - left.x * right.y
+        if a == 0 and b == 0:
+            return 0
+        short_dist = abs((a * self.x + b * self.y + c) / math.sqrt(a * a + b * b))
+        return short_dist
 
 
 if __name__ == '__main__':

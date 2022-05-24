@@ -16,6 +16,7 @@ def traj_store_cluster(trajectories: List[Trajectory], epsilon=1.0) -> list:
     :param epsilon: 误差阈值 epsilon越大，越可能聚到一起
     :return: 聚类结果 list
     """
+    # 一、聚类
     group = []
     trajectory_set = set()
     for trajectory in trajectories:
@@ -33,7 +34,7 @@ def traj_store_cluster(trajectories: List[Trajectory], epsilon=1.0) -> list:
                 cluster.append(other)
                 trajectory_set.add(other.trajectory_id)
         group.append(cluster)
-    # 对聚类后的轨迹簇 进行多轨迹的压缩  => 即将非参考轨迹的 (t,x,y) 转变为 (t,t')
+    # 二、对聚类后的轨迹簇 进行多轨迹的压缩  => 即将非参考轨迹的 (t,x,y) 转变为 (t,t')
     for cluster in group:
         # 如果该聚簇没有参考轨迹  原始存储
         if len(cluster) == 1:
@@ -64,12 +65,12 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
     max_dist = -1
     # 一、 对于t1中的每个点 Pi 计算 t2中对应的位置 Pi'
     for i in range(len(t1.points)):
-        print("i: ", i)
+        # print("i: ", i)
         t1_point = t1.points[i]
         # 1.1 计算 Pi 到第一个点的线性距离 distance_for_pi
         distance_for_pi = t1_point.distance(t1.points[0])
 
-        print("t1_point:", t1_point.x, t1_point.y)
+        # print("t1_point:", t1_point.x, t1_point.y)
         # print("distance_for_pi:", distance_for_pi)
 
         # 1.2 找到 t2 中距离第一个点 distance_for_pi 距离的位置  本质是一个圆与一个线段的交点
@@ -79,8 +80,6 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
         # 寻对应点开始
         index = 0
         index_set = set()
-        if i == 124:
-            print(111)
         while index < len(t2.points) - 1:
             pre_dist = t2.points[index].distance(t1_point)
             aft_dist = t2.points[index + 1].distance(t1_point)
@@ -163,6 +162,6 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
     return max_dist
 
 
-# 计算轨迹间的距离 return max(traj_dist(t1,t2),traj_dist(t2,t1))
+# 计算轨迹间的距离 t1->t2 t2-t1 取距离最大值
 def dist(t1, t2):
     return max(traj_dist(t2, t1), traj_dist(t1, t2))

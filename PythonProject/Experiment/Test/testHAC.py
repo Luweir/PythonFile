@@ -11,7 +11,7 @@ class Point:
         self.lon = lon
 
 
-data = pd.read_csv('../data/10.9.csv', header=None)
+data = pd.read_csv('../data/AirlineData/10.9.csv', header=None)
 data = data[:20]
 
 pointList = [i + 1 for i in range(20)]

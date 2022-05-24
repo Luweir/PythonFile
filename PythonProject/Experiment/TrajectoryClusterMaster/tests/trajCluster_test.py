@@ -11,12 +11,12 @@
 import numpy as np
 import pandas as pd
 
-from Experiment.TrajectoryClusterMaster.trajCluster.partition import approximate_trajectory_partitioning, \
-    segment_mdl_comp, rdp_trajectory_partitioning
-from Experiment.TrajectoryClusterMaster.trajCluster.point import Point
-from Experiment.TrajectoryClusterMaster.trajCluster.cluster import line_segment_clustering, \
+from Experiment.TrajectoryClusterMaster.trajCluster import approximate_trajectory_partitioning, \
+    rdp_trajectory_partitioning
+from Experiment.common.Point import Point
+from Experiment.TrajectoryClusterMaster.trajCluster import line_segment_clustering, \
     representative_trajectory_generation
-from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+from scipy.cluster.hierarchy import linkage, fcluster
 from matplotlib import pyplot as plt
 
 
