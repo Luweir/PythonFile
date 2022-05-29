@@ -29,6 +29,10 @@ class Trajectory:
         self.points.append(point)
 
     def to_list(self):
+        """
+        将 self.points 转换成 [[]] 的形式输出
+        :return:
+        """
         trajectory_list = []
         for ele in self.points:
             trajectory_list.append([ele.t, ele.x, ele.y])

@@ -157,7 +157,6 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
                         line_next.t - line_pre.t)
                 t1.reference_time.append(line_pre.t + int(delta_t))
             max_dist = max(t1_point.get_haversine(corresponding_point), max_dist)
-        print("max_dist:", max_dist)
     # 3）所有点中最大的距离 即为 return 值
     return max_dist
 

@@ -115,7 +115,7 @@ class Point(object):
         """
         lx = start.x + (self.t - start.t) / (end.t - start.t) * (end.x - start.x)
         ly = start.y + (self.t - start.t) / (end.t - start.t) * (end.y - start.y)
-        return Point(lx, ly)
+        return Point(lx, ly, t=self.t)
 
     def get_haversine(self, other: 'Point') -> float:
         """
@@ -184,7 +184,7 @@ class Point(object):
     def get_point_by_time_and_line(self, time, end: 'Point') -> 'Point':
         """
         以 self 和 end 为线段起点和终点，预测 time 时刻的位置
-        :param time: 需要预测的世界
+        :param time: 需要预测的时间
         :param end: 线段终点
         :return: Point
         """
@@ -206,6 +206,28 @@ class Point(object):
             return 0
         short_dist = abs((a * self.x + b * self.y + c) / math.sqrt(a * a + b * b))
         return short_dist
+
+    def get_sed(self, left: 'Point', right: 'Point') -> float:
+        """
+        返回 self 到线段 left-right 的 sed 距离
+        :param left:
+        :param right:
+        :return:
+        """
+        new_x = left.x + (right.x - left.x) * (self.t - left.t) / (
+                right.t - left.t)
+        new_y = left.y + (right.y - left.y) * (self.t - left.t) / (
+                right.t - left.t)
+        sed_error = math.sqrt((self.x - new_x) ** 2 + (self.y - new_y) ** 2)
+        return sed_error
+
+    def get_speed(self, other: 'Point') -> float:
+        """
+        获得该点与other点之间的平均速度
+        :param other:
+        :return:
+        """
+        return abs(self.distance(other) / (self.t - other.t))
 
 
 if __name__ == '__main__':

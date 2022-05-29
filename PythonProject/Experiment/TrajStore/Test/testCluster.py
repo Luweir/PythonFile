@@ -11,6 +11,7 @@ import random
 
 from Experiment.common.Point import Point
 from Experiment.common.Trajectory import Trajectory
+from Experiment.common.zip import zip_compress
 from Experiment.compare.compare import get_PED_error
 from Experiment.data.DataProcess.data_process import get_trajectories
 
@@ -111,26 +112,32 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
 
 
 if __name__ == '__main__':
-    origin_trajectories = get_trajectories()
-    epsilon = 400
-    # 第一部分 线性法消除无关点
-    linear_eliminate_trajectories = linear_eliminate(origin_trajectories, 0.5 * epsilon / 100000.0)
-    # linear_eliminate_trajectories = copy.deepcopy(origin_trajectories)
-    # 第二部分 聚类压缩
-    group = traj_store_cluster(linear_eliminate_trajectories, 0.25 * epsilon)
+    # epsilon = 400
+    res = []
+    for i in range(40, 60):
+        epsilon = 50 * i
+        origin_trajectories = get_trajectories()
+        # 第一部分 线性法消除无关点
+        linear_eliminate_trajectories = linear_eliminate(origin_trajectories, 0.5 * epsilon / 100000.0)
+        # linear_eliminate_trajectories = copy.deepcopy(origin_trajectories)
+        # 第二部分 聚类压缩
+        group = traj_store_cluster(linear_eliminate_trajectories, 0.25 * epsilon)
 
-    # output_origin_trajectory(trajectories)
-    output_compressed_trajectory(linear_eliminate_trajectories)
+        # output_origin_trajectory(trajectories)
+        output_compressed_trajectory(linear_eliminate_trajectories)
 
-    hash_map = {}
-    for trajectory in linear_eliminate_trajectories:
-        if trajectory.reference_trajectory_id == -1:
-            hash_map[trajectory.trajectory_id] = trajectory
-    total_ped = 0
-    max_ped_error = 0
-    for i in range(len(linear_eliminate_trajectories)):
-        [a, b] = get_traj_store_ped_error(origin_trajectories[i], linear_eliminate_trajectories[i], hash_map)
-        total_ped += a
-        max_ped_error = max(max_ped_error, b)
-    print("average ped error:", total_ped / len(origin_trajectories))
-    print("max ped error:", max_ped_error)
+        hash_map = {}
+        for trajectory in linear_eliminate_trajectories:
+            if trajectory.reference_trajectory_id == -1:
+                hash_map[trajectory.trajectory_id] = trajectory
+        average_ped_error = 0
+        max_ped_error = 0
+        for i in range(len(linear_eliminate_trajectories)):
+            [a, b] = get_traj_store_ped_error(origin_trajectories[i], linear_eliminate_trajectories[i], hash_map)
+            average_ped_error += a
+            max_ped_error = max(max_ped_error, b)
+        print("average ped error:", average_ped_error / len(origin_trajectories))
+        print("max ped error:", max_ped_error)
+        [a, b] = zip_compress("output_compressed_trajectory.txt")
+        res.append([epsilon, average_ped_error / len(origin_trajectories), max_ped_error, a, b])
+    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '压缩后文件大小', 'zip后文件大小'])

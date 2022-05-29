@@ -51,6 +51,13 @@ def mtc_add(t: Trajectory, c: List[Trajectory], miu):
 
 # dp 单轨迹压缩
 def dp_stc(t_points, miu, just_point=True) -> list:
+    """
+    对轨迹进行 DP 单轨迹压缩
+    :param t_points: list[point1,point2...]
+    :param miu: 误差 欧氏距离误差
+    :param just_point: true→不需要匹配参考点 false->需要匹配参考点
+    :return:
+    """
     t_points_copy = []
     if just_point:
         t_points_copy = t_points
