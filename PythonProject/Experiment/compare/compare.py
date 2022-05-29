@@ -80,13 +80,12 @@ def get_SED_error(point: List[Point], sample: List[Point]) -> list:
     return [sum_sed_error / len(point), max_sed_error]
 
 
-# p2的速度误差 = p2的平均速度 - p1p3的平均速度
 def get_speed_error(point: List[Point], sample: List[Point]) -> list:
     """
     获得原始轨迹与压缩轨迹的速度误差
     :param point:
     :param sample:
-    :return:
+    :return:[平均速度误差，最大速度误差]
     """
     max_speed_error = 0
     left_point = sample[0]
@@ -115,68 +114,41 @@ def get_speed_error(point: List[Point], sample: List[Point]) -> list:
     return [sum_speed_error / len(point), max_speed_error]
 
 
-# p2的角度误差 = p1p2的角度 与 p1p2'的角度差
-def get_angle_error(point, sample):
+def get_angle_error(point: List[Point], sample: List[Point]) -> list:
+    """
+    获得原始轨迹 与 压缩轨迹的角度误差
+    :param point:
+    :param sample:
+    :return:[平均角度误差，最大角度误差]
+    """
+    max_angle_error = 0
     left_point = sample[0]
     sample_index = 1
     right_point = sample[sample_index]
     point_index = 0
-    angle_error = 0
+    sum_angle_error = 0
     while sample_index < len(sample):
-        if right_point[1] != left_point[1] and right_point[2] != left_point[2]:
-            lat_diff = right_point[1] - left_point[1]
-            lon_diff = right_point[2] - left_point[2]
-            sample_angle = math.atan2(lon_diff, lat_diff)
-            # 如果当前点在简化后的两点之间
-            while left_point[0] <= point[point_index][0] <= right_point[0]:
-                cur_point = point[point_index]
+        sample_angle = math.atan2(right_point.y - left_point.y, right_point.x - left_point.x)
+        while left_point.t <= point[point_index].t < right_point.t:
+            cur_point = point[point_index]
+            if cur_point.t != left_point.t:
                 # 计算angle误差
-                lat_diff = cur_point[1] - left_point[1]
-                lon_diff = cur_point[2] - left_point[2]
-                angle_error += abs(sample_angle - math.atan2(lon_diff, lat_diff))
-                point_index += 1
-                if point_index >= len(point):
-                    return angle_error
+                angle_error = abs(sample_angle - math.atan2(cur_point.y - left_point.y, cur_point.x - left_point.x))
+                max_angle_error = max(max_angle_error, angle_error)
+                sum_angle_error += angle_error
+            point_index += 1
+            if point_index >= len(point):
+                return [sum_angle_error / len(point), max_angle_error]
         sample_index += 1
         if sample_index >= len(sample):
-            return angle_error
+            break
         left_point = right_point
         right_point = sample[sample_index]
-    return angle_error
+    return [sum_angle_error / len(point), max_angle_error]
 
 
-def get_angle_error2(point, sample):
-    left_point = sample[0]
-    sample_index = 1
-    right_point = sample[sample_index]
-    point_index = 0
-    angle_error = 0
-    while sample_index < len(sample):
-        if right_point[1] != left_point[1] and right_point[2] != left_point[2]:
-            lat_diff = right_point[1] - left_point[1]
-            lon_diff = right_point[2] - left_point[2]
-            sample_angle = math.atan2(lon_diff, lat_diff)
-            # 如果当前点在简化后的两点之间
-            pre_point = left_point
-            while left_point[0] <= point[point_index][0] <= right_point[0]:
-                cur_point = point[point_index]
-                # 计算angle误差
-                lat_diff = cur_point[1] - pre_point[1]
-                lon_diff = cur_point[2] - pre_point[2]
-                angle_error += abs(sample_angle - math.atan2(lon_diff, lat_diff))
-                point_index += 1
-                pre_point = cur_point
-                if point_index >= len(point):
-                    return angle_error / len(point)
-        sample_index += 1
-        if sample_index >= len(sample):
-            return angle_error / len(point)
-        left_point = right_point
-        right_point = sample[sample_index]
-    return angle_error / len(point)
-
-
-def get_dtw(point, sample):
-    traj1 = np.array(point)
-    traj2 = np.array(sample)
-    return dtw.get_fastdtw(traj1, traj2)
+def get_dtw(point: List[Point], sample: List[Point]):
+    # traj1 = np.array(point)
+    # traj2 = np.array(sample)
+    # return dtw.get_fastdtw(traj1, traj2)
+    ...

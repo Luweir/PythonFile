@@ -9,6 +9,8 @@
 # log       :包含修改时间、修改人、修改line及原因
 # --------------------------------------------------------------------------------
 import math
+import time
+
 import numpy as np
 import pandas as pd
 
@@ -133,7 +135,7 @@ def cluster_HAC(norm_cluster, t=3.0):
         print("该聚簇的点可分为：", cluster_assignments.max(), " 类")
         # print("cluster_assignments:", cluster_assignments)
 
-        # 分类好
+        # 分类
         temp_cluster_list = [[] for i in range(cluster_assignments.max())]
         for i in range(len(cluster_assignments)):
             temp_cluster_list[cluster_assignments[i] - 1].append(point_list[i])
@@ -169,59 +171,91 @@ def generate_trajectory(data):
 
 
 def run():
-    # res = []
-    epsilon = 110
-    trajectories = []
-    parts = []
-    path = r'E:\Desktop\Programmer\PythonFile\PythonProject\Experiment\data\SyntheticData'
-    for i in range(7):
-        trajectory = []  # Track points set
-        data = pd.read_csv(path + r"\output_origin_trajectory_" + str(i) + ".csv", header=None,
-                           sep=',').values.tolist()
-        for ele in data:
-            trajectory.append(Point(x=ele[1], y=ele[2], trajectory_id=i, t=int(ele[0])))
-        print("原始轨迹长度：", len(trajectory))
-        part = rdp_trajectory_partitioning(trajectory, traj_id=i, epsilon=epsilon / 100000)
-        trajectories.append(trajectory)
-        parts.append(part)
-    # -----------------------------------------  end my data testing -------------------
-    all_segs = []
-    for ele in parts:
-        all_segs += ele
-    print("一共多少轨迹段:", len(all_segs))
-    # 进行点的聚类
-    # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
-    norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=0.5)
-    for k, v in remove_cluster.items():
-        print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
-    cluster_HAC(norm_cluster, t=epsilon / 100000.0)
-    # -------------------------------------输出聚类之后的 start -----------------------------------
-    new_traj = []
-    for part in parts:
-        for ele in part:
-            new_traj.append([int(ele.start.t), round(ele.start.x, 4), round(ele.start.y, 4)])
-        new_traj.append([int(part[-1].end.t), round(part[-1].end.x, 4), round(part[-1].end.y, 4)])
-    pd.DataFrame(new_traj).to_csv("mtc_2cluster_compressed_trajectory.txt", index=False, header=0)
-    # -------------------------------------输出聚类之后的 end---------------------------------------
-    old_trajectories = get_trajectories(trajectory_type="point_list")
-    average_ped_error = 0
-    max_ped_error = 0
-    for i in range(7):
+    res = []
+    # epsilon = 110
+    for i in range(1, 50):
+        epsilon = i * 20
+        trajectories = []
+        parts = []
+        path = r'E:\Desktop\Programmer\PythonFile\PythonProject\Experiment\data\SyntheticData'
+        for i in range(7):
+            trajectory = []  # Track points set
+            data = pd.read_csv(path + r"\output_origin_trajectory_" + str(i) + ".csv", header=None,
+                               sep=',').values.tolist()
+            for ele in data:
+                trajectory.append(Point(x=ele[1], y=ele[2], trajectory_id=i, t=int(ele[0])))
+            print("原始轨迹长度：", len(trajectory))
+            part = rdp_trajectory_partitioning(trajectory, traj_id=i, epsilon=epsilon / 100000)
+            trajectories.append(trajectory)
+            parts.append(part)
+        # -----------------------------------------  end my data testing -------------------
+        all_segs = []
+        for ele in parts:
+            all_segs += ele
+        print("一共多少轨迹段:", len(all_segs))
+        # 进行点的聚类
+        compress_start_time = time.perf_counter()
+
+        # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
+        norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=0.5)
+        for k, v in remove_cluster.items():
+            print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
+        cluster_HAC(norm_cluster, t=epsilon / 100000.0)
+        compress_end_time = time.perf_counter()
+        # -------------------------------------输出聚类之后的 start -----------------------------------
         new_traj = []
-        for ele in parts[i]:
-            new_traj.append(Point(x=round(ele.start.x, 4), y=round(ele.start.y, 4), t=int(ele.start.t)))
-        new_traj.append(
-            Point(x=round(parts[i][-1].end.x, 4), y=round(parts[i][-1].end.y, 4), t=int(parts[i][-1].end.t)))
-        a, b = compare.get_PED_error(old_trajectories[i], new_traj)
-        print("[traj" + str(i) + "] average PED error: ", a, ", max_ped_error: ", b)
-        average_ped_error += a
-        max_ped_error = max(max_ped_error, b)
-    print("total： average ped error：", average_ped_error / 7, ", max_ped_error: ", max_ped_error)
-    [a, b] = zip_compress("mtc_2cluster_compressed_trajectory.txt")
-    print([epsilon, average_ped_error / len(trajectories), max_ped_error, a, b])
-    # res.append([epsilon, average_ped_error / len(trajectories), max_ped_error, a, b])
-    # res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '压缩后文件大小', 'zip后文件大小'])
-    # return res
+        for part in parts:
+            for ele in part:
+                new_traj.append([int(ele.start.t), round(ele.start.x, 4), round(ele.start.y, 4)])
+            new_traj.append([int(part[-1].end.t), round(part[-1].end.x, 4), round(part[-1].end.y, 4)])
+        pd.DataFrame(new_traj).to_csv("mtc_2cluster_compressed_trajectory.txt", index=False, header=0)
+        # -------------------------------------输出聚类之后的 end---------------------------------------
+        old_trajectories = get_trajectories(trajectory_type="point_list")
+        average_ped_error = 0
+        max_ped_error = 0
+        average_sed_error = 0
+        max_sed_error = 0
+        average_speed_error = 0
+        max_speed_error = 0
+        average_angle_error = 0
+        max_angle_error = 0
+
+        for i in range(len(old_trajectories)):
+            new_traj = []
+            for ele in parts[i]:
+                new_traj.append(Point(x=round(ele.start.x, 4), y=round(ele.start.y, 4), t=int(ele.start.t)))
+            new_traj.append(
+                Point(x=round(parts[i][-1].end.x, 4), y=round(parts[i][-1].end.y, 4), t=int(parts[i][-1].end.t)))
+            [a, b] = compare.get_PED_error(old_trajectories[i], new_traj)
+            [c, d] = compare.get_SED_error(old_trajectories[i], new_traj)
+            [e, f] = compare.get_speed_error(old_trajectories[i], new_traj)
+            [g, h] = compare.get_angle_error(old_trajectories[i], new_traj)
+            average_ped_error += a
+            max_ped_error = max(max_ped_error, b)
+            average_sed_error += c
+            max_sed_error = max(max_sed_error, d)
+            average_speed_error += e
+            max_speed_error = max(max_speed_error, f)
+            average_angle_error += g
+            max_angle_error = max(max_angle_error, h)
+
+        print("average_ped_error:", average_ped_error / len(old_trajectories))
+        print("max_ped_error:", max_ped_error)
+        print("average_sed_error:", average_sed_error / len(old_trajectories))
+        print("max_sed_error:", max_sed_error)
+        print("average_speed_error:", average_speed_error / len(old_trajectories))
+        print("max_speed_error:", max_speed_error)
+        print("average_angle_error:", average_angle_error / len(old_trajectories))
+        print("max_speed_error:", max_angle_error)
+        [a, b] = zip_compress("mtc_2cluster_compressed_trajectory.txt")
+        res.append(
+            [epsilon, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
+             max_sed_error, average_speed_error / len(trajectories), max_speed_error,
+             average_angle_error / len(trajectories), max_angle_error, a, b, (compress_end_time - compress_start_time)])
+    res = pd.DataFrame(res,
+                       columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
+                                '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
+    return res
 
 
 if __name__ == '__main__':
