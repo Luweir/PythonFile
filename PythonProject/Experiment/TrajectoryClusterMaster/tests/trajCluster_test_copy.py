@@ -112,13 +112,18 @@ def cluster_HAC(norm_cluster, t=3.0):
         print("簇ID：", cluster_id, "共有 seg：", len(cluster), " 个, 点：", (2 * len(cluster)), " 个")
         # 一、运行凝聚型层次聚类  将簇内所有点凝聚聚类   保证类内误差距离
         point_list = []
+        point_set = set()
         data = []
         # 注意可能有连续段  到时候还要用集合!!!!!l
         for seg in cluster:
-            point_list.append(seg.start)
-            point_list.append(seg.end)
-            data.append([seg.start.x, seg.start.y])
-            data.append([seg.end.x, seg.end.y])
+            if seg.start not in point_set:
+                point_set.add(seg.start)
+                point_list.append(seg.start)
+                data.append([seg.start.x, seg.start.y])
+            if seg.end not in point_set:
+                point_set.add(seg.end)
+                point_list.append(seg.end)
+                data.append([seg.end.x, seg.end.y])
         data = np.array(data)
         # print(data)
         # data_zs = 1.0 * data / data.max()  # 归一化
@@ -197,11 +202,19 @@ def run():
         compress_start_time = time.perf_counter()
 
         # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=3, epsilon=15.0)
-        norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=0.5)
-        for k, v in remove_cluster.items():
-            print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
+        # norm_cluster, remove_cluster = line_segment_clustering(all_segs, min_lines=2, epsilon=0.5)
+        # for k, v in remove_cluster.items():
+        #     print("remove cluster: the cluster %d, the segment number %d" % (k, len(v)))
+        # 试一试只用点的聚类
+        norm_cluster = dict()
+        norm_cluster[0] = all_segs
+
+        compress_end_time = time.perf_counter()
+        line_segment_clustering_time = compress_end_time - compress_start_time
+        compress_start_time = time.perf_counter()
         cluster_HAC(norm_cluster, t=epsilon / 100000.0)
         compress_end_time = time.perf_counter()
+        cluster_hac_time = compress_end_time - compress_start_time
         # -------------------------------------输出聚类之后的 start -----------------------------------
         new_traj = []
         for part in parts:
@@ -251,10 +264,11 @@ def run():
         res.append(
             [epsilon, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
              max_sed_error, average_speed_error / len(trajectories), max_speed_error,
-             average_angle_error / len(trajectories), max_angle_error, a, b, (compress_end_time - compress_start_time)])
+             average_angle_error / len(trajectories), max_angle_error, a, b, line_segment_clustering_time,
+             cluster_hac_time])
     res = pd.DataFrame(res,
                        columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
-                                '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
+                                '最大角度误差', '压缩后文件大小', 'zip后文件大小', '线段聚类时间(s)', '点聚类时间'])
     return res
 
 
