@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\Experiment\data\DataProcess\trips.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\Experiment\data\SyntheticData\output_origin_trajectory_2.csv">
           <value>
             <Attribute>
