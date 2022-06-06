@@ -16,7 +16,7 @@ import pandas as pd
 
 from Experiment.TrajectoryClusterMaster.trajCluster import rdp_trajectory_partitioning, line_segment_clustering
 from Experiment.common.Point import Point
-from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from matplotlib import pyplot as plt
 import Experiment.compare.compare as compare
 from Experiment.common.zip import zip_compress
@@ -109,7 +109,7 @@ def cluster_HAC(norm_cluster, t=3.0):
         if len(cluster) < 3:
             cluster_id += 1
             continue
-        print("簇ID：", cluster_id, "共有 seg：", len(cluster), " 个, 点：", (2 * len(cluster)), " 个")
+        print("簇ID：", cluster_id, "共有 seg：", len(cluster), " 个")
         # 一、运行凝聚型层次聚类  将簇内所有点凝聚聚类   保证类内误差距离
         point_list = []
         point_set = set()
@@ -125,11 +125,12 @@ def cluster_HAC(norm_cluster, t=3.0):
                 point_list.append(seg.end)
                 data.append([seg.end.x, seg.end.y])
         data = np.array(data)
+        print("点：", len(point_set), "个")
         # print(data)
         # data_zs = 1.0 * data / data.max()  # 归一化
         mergings = linkage(data, method='complete', metric="euclidean")
 
-        point_index = [i for i in range(len(point_list))]
+        # point_index = [i for i in range(len(point_list))]
         # plt.figure(figsize=(9, 7))
         # plt.title("original data")
         # dendrogram(mergings, labels=point_index, leaf_rotation=45, leaf_font_size=8)
@@ -149,6 +150,8 @@ def cluster_HAC(norm_cluster, t=3.0):
             center_x = 0
             center_y = 0
             t_dict = {}
+            if len(ele) == 1:
+                continue
             for e in ele:
                 center_x += e.x
                 center_y += e.y
@@ -178,8 +181,9 @@ def generate_trajectory(data):
 def run():
     res = []
     # epsilon = 110
-    for i in range(1, 50):
+    for i in range(0, 50):
         epsilon = i * 20
+        compress_start_time = time.perf_counter()
         trajectories = []
         parts = []
         path = r'E:\Desktop\Programmer\PythonFile\PythonProject\Experiment\data\SyntheticData'
@@ -190,7 +194,7 @@ def run():
             for ele in data:
                 trajectory.append(Point(x=ele[1], y=ele[2], trajectory_id=i, t=int(ele[0])))
             print("原始轨迹长度：", len(trajectory))
-            part = rdp_trajectory_partitioning(trajectory, traj_id=i, epsilon=epsilon / 100000)
+            part = rdp_trajectory_partitioning(trajectory, traj_id=i, epsilon=epsilon / 100000.0)
             trajectories.append(trajectory)
             parts.append(part)
         # -----------------------------------------  end my data testing -------------------
@@ -209,9 +213,9 @@ def run():
         norm_cluster = dict()
         norm_cluster[0] = all_segs
 
-        compress_end_time = time.perf_counter()
-        line_segment_clustering_time = compress_end_time - compress_start_time
-        compress_start_time = time.perf_counter()
+        # compress_end_time = time.perf_counter()
+        # line_segment_clustering_time = compress_end_time - compress_start_time
+        # compress_start_time = time.perf_counter()
         cluster_HAC(norm_cluster, t=epsilon / 100000.0)
         compress_end_time = time.perf_counter()
         cluster_hac_time = compress_end_time - compress_start_time
@@ -264,11 +268,11 @@ def run():
         res.append(
             [epsilon, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
              max_sed_error, average_speed_error / len(trajectories), max_speed_error,
-             average_angle_error / len(trajectories), max_angle_error, a, b, line_segment_clustering_time,
-             cluster_hac_time])
+             average_angle_error / len(trajectories), max_angle_error, a, b, cluster_hac_time])
     res = pd.DataFrame(res,
                        columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
-                                '最大角度误差', '压缩后文件大小', 'zip后文件大小', '线段聚类时间(s)', '点聚类时间'])
+                                '最大角度误差', '压缩后文件大小', 'zip后文件大小', '点聚类时间'])
+
     return res
 
 
