@@ -5,7 +5,7 @@ import pandas as pd
 from Experiment.DP.dp import douglas_peucker
 from Experiment.common.zip import zip_compress
 from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error
-from Experiment.data.DataProcess.data_process import get_trajectories
+from Experiment.data.data_process import get_trajectories
 
 
 def run_sample():

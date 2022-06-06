@@ -15,15 +15,17 @@ if __name__ == '__main__':
     # parser.parse 自动解析
     date_object = parser.parse(date_str1)
     print(date_object)
+    print("-------------------")
     # 1.2 时间转字符串
     print(type(str(date_object)))
-
     # 1.3 日期相加减，只能用增量加减
+    print("------------")
     new_date_object = date_object + datetime.timedelta(hours=+0.5)  # days、hours ......
     print("相加前：" + str(date_object))
     print("相加后：" + str(new_date_object))
 
     # 1.4 比较日期大小
+    print("--------------")
     print(new_date_object > date_object)
     print(((date_object + datetime.timedelta(seconds=+30)) - date_object).seconds)
 
@@ -32,4 +34,5 @@ if __name__ == '__main__':
     time_str2 = "4:55:30"
 
     new_time = datetime.datetime.strptime(time_str2, "%H:%M:%S") + datetime.timedelta(seconds=+40)
+    print("--------------")
     print(new_time.time())

@@ -1,20 +1,15 @@
-import copy
 import time
 
-import numpy as np
 import pandas as pd
-import math
 
 from typing import List
 
 from Experiment.TrajStore.src.cluster import traj_store_cluster
-import random
 
-from Experiment.common.Point import Point
 from Experiment.common.Trajectory import Trajectory
 from Experiment.common.zip import zip_compress
 from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error
-from Experiment.data.DataProcess.data_process import get_trajectories
+from Experiment.data.data_process import get_trajectories
 
 
 def output_origin_trajectory(trajectories):

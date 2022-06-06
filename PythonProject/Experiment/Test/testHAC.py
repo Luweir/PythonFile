@@ -1,9 +1,7 @@
-from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
-import matplotlib.pyplot as plt
-import pandas as pd
+from scipy.cluster.hierarchy import linkage, fcluster
 import numpy as np
 
-from Experiment.data.DataProcess.data_process import get_trajectories
+from Experiment.data.data_process import get_trajectories
 if __name__ == '__main__':
     t = 20
     trajectories = get_trajectories(trajectory_type="point_list")

@@ -14,13 +14,13 @@ import time
 import numpy as np
 import pandas as pd
 
-from Experiment.TrajectoryClusterMaster.trajCluster import rdp_trajectory_partitioning, line_segment_clustering
+from Experiment.TrajectoryClusterMaster.trajCluster import rdp_trajectory_partitioning
 from Experiment.common.Point import Point
-from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
+from scipy.cluster.hierarchy import linkage, fcluster
 from matplotlib import pyplot as plt
 import Experiment.compare.compare as compare
 from Experiment.common.zip import zip_compress
-from Experiment.data.DataProcess.data_process import get_trajectories
+from Experiment.data.data_process import get_trajectories
 
 EARTH_RADIUS = 6371229  # m 用于两点间距离计算
 
@@ -176,6 +176,7 @@ def generate_trajectory(data):
                                 data.iloc[i][2],
                                 data.iloc[i][0]))
     return trajectory
+
 
 
 def run():
