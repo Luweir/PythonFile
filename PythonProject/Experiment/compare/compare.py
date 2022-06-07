@@ -96,13 +96,20 @@ def get_speed_error(point: List[Point], sample: List[Point]) -> list:
     while sample_index < len(sample):
         # 如果当前点在简化后的两点之间
         while point_index < len(point) - 1 and left_point.t <= point[point_index].t < right_point.t:
+            # print("left_point", left_point.to_list())
+            # print("right_point", right_point.to_list())
+            # print("point[point_index]", point[point_index].to_list())
+            # print("point[point_index+1]", point[point_index + 1].to_list())
             simulate_point1 = point[point_index].linear_prediction(left_point, right_point)
             simulate_point2 = point[point_index + 1].linear_prediction(left_point, right_point)
-            # 计算speed误差
-            speed_error = abs(
-                point[point_index].get_speed(point[point_index + 1]) - simulate_point1.get_speed(simulate_point2))
-            max_speed_error = max(max_speed_error, speed_error)
-            sum_speed_error += speed_error
+            # print("simulate_point1", simulate_point1.to_list())
+            # print("simulate_point2", simulate_point2.to_list())
+            if simulate_point1.t != simulate_point2.t:
+                # 计算speed误差
+                speed_error = abs(
+                    point[point_index].get_speed(point[point_index + 1]) - simulate_point1.get_speed(simulate_point2))
+                max_speed_error = max(max_speed_error, speed_error)
+                sum_speed_error += speed_error
             point_index += 1
             if point_index >= len(point):
                 return [sum_speed_error / len(point), max_speed_error]

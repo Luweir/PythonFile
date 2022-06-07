@@ -6,11 +6,11 @@ from Experiment.DP.dp import douglas_peucker
 from Experiment.TrajSTCCluster.stcCluster.cluster import cluster_HAC
 from Experiment.common.zip import zip_compress
 from Experiment.compare import compare
-from Experiment.data.data_process import get_trajectories
+from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_trajectories
 
 if __name__ == '__main__':
-    epsilon = 20
-    trajectories = get_trajectories("point_list")
+    epsilon = 3.0
+    trajectories = get_berlin_mod_0_005_trajectories("point_list")
     start_time = time.perf_counter()
     dp_trajectories = []
     # dp 单轨迹压缩
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     # 分析误差
     res = []
-    origin_trajectories = get_trajectories(trajectory_type="point_list")
+    origin_trajectories = get_berlin_mod_0_005_trajectories(trajectory_type="point_list")
     average_ped_error = 0
     max_ped_error = 0
     average_sed_error = 0
