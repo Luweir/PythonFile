@@ -39,13 +39,13 @@ def cluster_HAC(trajectories, t=3.0):
     for ele in temp_cluster_list:
         center_x = 0
         center_y = 0
-        t_dict = {}
+        # t_dict = {}
         if len(ele) == 1:
             continue
         for e in ele:
             center_x += e.x
             center_y += e.y
-            t_dict[e.trajectory_id] = e.t
+            # t_dict[e.trajectory_id] = e.t
         center_x = center_x / len(ele)
         center_y = center_y / len(ele)
         for e in ele:

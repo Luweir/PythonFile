@@ -5,13 +5,13 @@ import pandas as pd
 from Experiment.DP.dp import douglas_peucker
 from Experiment.common.zip import zip_compress
 from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error
-from Experiment.data.data_process import get_trajectories
+from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_trajectories
 
 
 def run_sample():
-    trajectories = get_trajectories(trajectory_type="point_list")[:2]
+    epsilon = 3.0
+    trajectories = get_berlin_mod_0_005_trajectories("point_list")
     compressed_trajectories = []
-    data = []
     average_ped_error = 0
     max_ped_error = 0
     average_sed_error = 0
@@ -21,13 +21,11 @@ def run_sample():
     average_angle_error = 0
     max_angle_error = 0
     res = []
-    epsilon = 100
     for trajectory in trajectories:
         sample_index = douglas_peucker(trajectory, 0, len(trajectory) - 1, epsilon / 100000.0)
         compressed_trajectory = []
         for index in sample_index:
             compressed_trajectory.append(trajectory[index])
-            data.append(trajectory[index].to_list())
         [a, b] = get_PED_error(trajectory, compressed_trajectory)
         [c, d] = get_SED_error(trajectory, compressed_trajectory)
         [e, f] = get_speed_error(trajectory, compressed_trajectory)
@@ -41,17 +39,19 @@ def run_sample():
         average_angle_error += g
         max_angle_error = max(max_angle_error, h)
         compressed_trajectories += compressed_trajectory
-        print("average_ped_error:", average_ped_error / len(trajectories))
-        print("max_ped_error:", max_ped_error)
-        print("average_sed_error:", average_sed_error / len(trajectories))
-        print("max_sed_error:", max_sed_error)
-        print("average_speed_error:", average_speed_error / len(trajectories))
-        print("max_speed_error:", max_speed_error)
-        print("average_angle_error:", average_angle_error / len(trajectories))
-        print("max_speed_error:", max_angle_error)
-        print("点数：", len(compressed_trajectories))
-        # [a, b] = zip_compress("mtc_dp_compressed_trajectory.txt")
-        res.append([epsilon, average_ped_error / len(trajectories), max_ped_error, a, b])
+    print("average_ped_error:", average_ped_error / len(trajectories))
+    print("max_ped_error:", max_ped_error)
+    print("average_sed_error:", average_sed_error / len(trajectories))
+    print("max_sed_error:", max_sed_error)
+    print("average_speed_error:", average_speed_error / len(trajectories))
+    print("max_speed_error:", max_speed_error)
+    print("average_angle_error:", average_angle_error / len(trajectories))
+    print("max_angle_error:", max_angle_error)
+    print("点数：", len(compressed_trajectories))
+    res.append(
+        [epsilon, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
+         max_sed_error, average_speed_error / len(trajectories), max_speed_error,
+         average_angle_error / len(trajectories), max_angle_error])
 
 
 def run():
@@ -114,4 +114,4 @@ def run():
 
 
 if __name__ == '__main__':
-    res = run()
+    res = run_sample()

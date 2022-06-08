@@ -69,12 +69,20 @@ def douglas_peucker(points: List[Point], start: int, last: int, epsilon: float):
 
 
 # TD-TR
-def td_tr(points, start, last, epsilon):
+def td_tr(points: List[Point], start: int, last: int, epsilon: float) -> list:
+    """
+    td-tr 算法
+    :param points:
+    :param start:
+    :param last:
+    :param epsilon:
+    :return:
+    """
     d_max = 0
     index = start
     rec_result = []
     for i in range(start + 1, last):
-        d = get_sed(points[start], points[i], points[last])
+        d = points[i].get_sed(points[start], points[last])
         if d > d_max:
             index = i
             d_max = d
@@ -88,25 +96,3 @@ def td_tr(points, start, last, epsilon):
         rec_result.append(start)
         rec_result.append(last)
     return rec_result
-
-
-if __name__ == '__main__':
-    filename = "10.9.csv"
-    epsilon = 0.01  # 0.0001
-    save_filename = "result.csv"
-    points = gps_reader(filename)
-    start_time = time.perf_counter()
-    sample_index = douglas_peucker(points, 0, len(points) - 1, epsilon)
-    sample = []
-    for e in sample_index:
-        sample.append(points[e])
-    end_time = time.perf_counter()
-    print("DP-TR")
-    print("dataset:" + str(filename))
-    cr.get_CR_and_time(save_filename, start_time, end_time, points, sample)
-    print("PED距离误差：" + str(cr.get_PED_error(points, sample)))
-    print("SED距离误差：" + str(cr.get_SED_error(points, sample)))
-    print("Angle角度误差：" + str(cr.get_angle_error2(points, sample)))
-    cr.get_dtw(points, sample)
-    # tg.get_two_line_chart(pd.DataFrame(points, columns=['time', 'longitude', 'latitude']),
-    #                       pd.DataFrame(sample, columns=['time', 'longitude', 'latitude']))

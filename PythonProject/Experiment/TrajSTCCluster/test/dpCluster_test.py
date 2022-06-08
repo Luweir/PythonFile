@@ -2,7 +2,7 @@ import time
 
 import pandas as pd
 
-from Experiment.DP.dp import douglas_peucker
+from Experiment.DP.dp import douglas_peucker, td_tr
 from Experiment.TrajSTCCluster.stcCluster.cluster import cluster_HAC
 from Experiment.common.zip import zip_compress
 from Experiment.compare import compare
@@ -11,7 +11,7 @@ from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_
 if __name__ == '__main__':
     epsilon = 3.0
     trajectories = get_berlin_mod_0_005_trajectories("point_list")
-    start_time = time.perf_counter()
+    dp_start_time = time.perf_counter()
     dp_trajectories = []
     # dp 单轨迹压缩
     for trajectory in trajectories:
@@ -21,10 +21,13 @@ if __name__ == '__main__':
             dp_trajectory.append(trajectory[e])
         dp_trajectories.append(dp_trajectory)
 
+    dp_end_time = time.perf_counter()
+
+    cluster_start_time = time.perf_counter()
     # 聚类多轨迹压缩
     cluster_HAC(dp_trajectories, t=epsilon / 100000.0)
 
-    end_time = time.perf_counter()
+    cluster_end_time = time.perf_counter()
 
     # 输出 mtc 之后的数据
     compressed_trajectories = []
@@ -65,10 +68,14 @@ if __name__ == '__main__':
     print("average_speed_error:", average_speed_error / len(origin_trajectories))
     print("max_speed_error:", max_speed_error)
     print("average_angle_error:", average_angle_error / len(origin_trajectories))
-    print("max_speed_error:", max_angle_error)
+    print("max_angle_error:", max_angle_error)
     [a, b] = zip_compress("mtc_dpCluster_test.txt")
+    print(["epsilon", "average_ped_error", "max_ped_error", "average_sed_error", "max_sed_error", "average_speed_error",
+           "max_speed_error", "average_angle_error", "max_angle_error", "before_zip_size", "after_zip_size", "dp_time",
+           "cluster_time"])
     res.append(
         [epsilon, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
          max_sed_error, average_speed_error / len(trajectories), max_speed_error,
-         average_angle_error / len(trajectories), max_angle_error, a, b, end_time - start_time])
+         average_angle_error / len(trajectories), max_angle_error, a, b, dp_end_time - dp_start_time,
+         cluster_end_time - cluster_start_time])
     print(res)

@@ -205,7 +205,7 @@ class Point(object):
         if a == 0 and b == 0:
             return 0
         short_dist = abs((a * self.x + b * self.y + c) / math.sqrt(a * a + b * b))
-        return short_dist
+        return short_dist if short_dist > 1e-6 else 0
 
     def get_sed(self, left: 'Point', right: 'Point') -> float:
         """
@@ -214,12 +214,16 @@ class Point(object):
         :param right:
         :return:
         """
-        new_x = left.x + (right.x - left.x) * (self.t - left.t) / (
-                right.t - left.t)
-        new_y = left.y + (right.y - left.y) * (self.t - left.t) / (
-                right.t - left.t)
+        numerator = self.t - left.t
+        denominator = right.t - left.t
+        time_ratio = 1
+        if denominator != 0:
+            time_ratio = numerator / denominator
+        new_x = left.x + (right.x - left.x) * time_ratio
+        new_y = left.y + (right.y - left.y) * time_ratio
+        print([new_x, new_y])
         sed_error = math.sqrt((self.x - new_x) ** 2 + (self.y - new_y) ** 2)
-        return sed_error
+        return sed_error if sed_error > 1e-6 else 0
 
     def get_speed(self, other: 'Point') -> float:
         """

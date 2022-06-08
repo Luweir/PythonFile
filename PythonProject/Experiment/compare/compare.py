@@ -22,10 +22,10 @@ def get_PED_error(point: List[Point], sample: List[Point]) -> list:
     point_index = 0
     sum_ped_error = 0
     while sample_index < len(sample):
+        if left_point.t > 1100:
+            print(111)
         # 如果当前点在简化后的两点之间
         while left_point.t <= point[point_index].t < right_point.t:
-            # if point_index < len(point) and point[point_index].t == right_point.t:
-            #     break
             cur_point = point[point_index]
             # 计算PED误差 如果左右点位置相同 那么 就计算cur_point与他们的点的距离
             if left_point.x == right_point.x and left_point.y == right_point.y:
@@ -77,6 +77,7 @@ def get_SED_error(point: List[Point], sample: List[Point]) -> list:
             break
         left_point = right_point
         right_point = sample[sample_index]
+
     return [sum_sed_error / len(point), max_sed_error]
 
 
