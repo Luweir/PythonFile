@@ -22,8 +22,6 @@ def get_PED_error(point: List[Point], sample: List[Point]) -> list:
     point_index = 0
     sum_ped_error = 0
     while sample_index < len(sample):
-        if left_point.t > 1100:
-            print(111)
         # 如果当前点在简化后的两点之间
         while left_point.t <= point[point_index].t < right_point.t:
             cur_point = point[point_index]

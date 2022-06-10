@@ -221,7 +221,7 @@ class Point(object):
             time_ratio = numerator / denominator
         new_x = left.x + (right.x - left.x) * time_ratio
         new_y = left.y + (right.y - left.y) * time_ratio
-        print([new_x, new_y])
+        # print([new_x, new_y])
         sed_error = math.sqrt((self.x - new_x) ** 2 + (self.y - new_y) ** 2)
         return sed_error if sed_error > 1e-6 else 0
 
@@ -231,7 +231,13 @@ class Point(object):
         :param other:
         :return:
         """
+
         return abs(self.distance(other) / (self.t - other.t))
+
+    def get_angle(self, start, end):
+        d = self.get_ped(start, end)
+        s = self.distance(start)
+        return math.asin(d / s)
 
 
 if __name__ == '__main__':

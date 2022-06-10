@@ -37,16 +37,16 @@ def load_trajectory(data: pd.DataFrame) -> List[Point]:
     pre_point = Point(x=0, y=0, t=-1)
     for i in range(len(data)):
         cur_point = Point(x=data.iloc[i][1], y=data.iloc[i][2],
-                          t=(parser.parse(data.iloc[i][0]) - start_time).seconds)
+                          t=(parser.parse(data.iloc[i][0]) - start_time).seconds + accum_time)
         # 防止BerlinMOD_0_005Data数据集中 相同时间不同距离的点的问题
         if cur_point.t == pre_point.t:
             cur_point.t = pre_point.t + 1
         # 防止BerlinMOD_0_005Data数据集中 出现时间跳跃的问题
         elif abs(cur_point.x - pre_point.x) < 1e-6 and abs(cur_point.y - pre_point.y) < 1e-6:
             start_time = parser.parse(data.iloc[i][0])
-            cur_point.t = 1
             accum_time = pre_point.t
-        cur_point.t = cur_point.t + accum_time
+            cur_point.t = accum_time + 1
+
         trajectory.append(cur_point)
         pre_point = cur_point
     return trajectory
