@@ -9,9 +9,9 @@ from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_
 
 
 def run_sample():
-    epsilon1 = 100.0
-    epsilon2 = 0.001
-    trajectories = get_berlin_mod_0_005_trajectories("point_list")
+    # epsilon1 = 100.0
+    epsilon2 = 0.27
+    trajectories = get_trajectories("point_list")
     compressed_trajectories = []
     average_ped_error = 0
     max_ped_error = 0
@@ -23,8 +23,8 @@ def run_sample():
     max_angle_error = 0
     res = []
     for trajectory in trajectories:
-        sample_index = douglas_peucker(trajectory, 0, len(trajectory) - 1, epsilon1 / 100000.0)
-        print(sample_index)
+        # sample_index = douglas_peucker(trajectory, 0, len(trajectory) - 1, epsilon1 / 100000.0)
+        # print(sample_index)
         sample_index = new_dp(trajectory, 0, len(trajectory) - 1, epsilon2)
         print(sample_index)
         compressed_trajectory = []
@@ -53,7 +53,7 @@ def run_sample():
     print("max_angle_error:", max_angle_error)
     print("点数：", len(compressed_trajectories))
     res.append(
-        [epsilon1, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
+        [epsilon2, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
          max_sed_error, average_speed_error / len(trajectories), max_speed_error,
          average_angle_error / len(trajectories), max_angle_error])
     return res

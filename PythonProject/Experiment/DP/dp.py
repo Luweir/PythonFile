@@ -92,9 +92,6 @@ def new_dp(points: List[Point], start: int, last: int, epsilon: float = 0.2):
         if d > d_max:
             index = i
             d_max = d
-        if points[i - 1].t == points[i].t:
-            print(points[i].t, points[i].x, points[i].y)
-            print(points[i - 1].t, points[i - 1].x, points[i - 1].y)
         v = points[i].get_speed(points[i - 1])
         a = points[i].get_angle(points[start], points[last])
         if v < seg_speed * (1 - epsilon) or v > seg_speed * (1 + epsilon) or a > 2 * epsilon:
@@ -102,13 +99,13 @@ def new_dp(points: List[Point], start: int, last: int, epsilon: float = 0.2):
                 tol_d_max = d
                 tol_index = i
     if d_max > d_threshold:
-        rec_result1 = douglas_peucker(points, start, index, epsilon)
-        rec_result2 = douglas_peucker(points, index, last, epsilon)
+        rec_result1 = new_dp(points, start, index, epsilon)
+        rec_result2 = new_dp(points, index, last, epsilon)
         rec_result.extend(rec_result1)
         rec_result.extend(rec_result2[1:])
     elif tol_d_max != 0:
-        rec_result1 = douglas_peucker(points, start, tol_index, epsilon)
-        rec_result2 = douglas_peucker(points, tol_index, last, epsilon)
+        rec_result1 = new_dp(points, start, tol_index, epsilon)
+        rec_result2 = new_dp(points, tol_index, last, epsilon)
         rec_result.extend(rec_result1)
         rec_result.extend(rec_result2[1:])
     else:

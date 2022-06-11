@@ -20,6 +20,8 @@ if __name__ == '__main__':
         for e in sample_index:
             dp_trajectory.append(trajectory[e])
         dp_trajectories.append(dp_trajectory)
+        # 这里进行网格划分
+        # 后面进行分网格聚类
 
     dp_end_time = time.perf_counter()
 
