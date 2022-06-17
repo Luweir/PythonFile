@@ -94,10 +94,10 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
             index += 1
         # 将最后一个点 连接 起点 找可能存在的一个映射点 => 即伪造这么一个线段（假设它最后回到了起点） 加入index_set中 不会出现找不到映射点问题 解决 映射点精度过低问题
         # 此时 index=最后一个点
-        pre_dist = t2.points[index].distance(t2.points[0])
-        aft_dist = 0
-        if pre_dist >= distance_for_pi >= aft_dist:
-            index_set.add(index)
+        # pre_dist = t2.points[index].distance(t2.points[0])
+        # aft_dist = 0
+        # if pre_dist >= distance_for_pi >= aft_dist:
+        #     index_set.add(index)
 
         # 二、计算 Pi 与 Pi' 的欧氏距离
         # 如果 distance_for_pi 已经超出了 t2 的范围   即找不到对应点  选择nc_point_closed_index
@@ -105,8 +105,8 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
             line_pre = t2.points[nc_point_closed_index]
             line_next = t2.points[nc_point_closed_index + 1]
             nc_point = t1_point.point_intersect_line(line_pre, line_next)
-            dist1 = t1_point.get_haversine(nc_point)
-            dist2 = t1_point.get_haversine(t2.points[index])
+            dist1 = t1_point.distance(nc_point)
+            dist2 = t1_point.distance(t2.points[index])
             # 如果非最佳匹配点 隔 t1_point 距离 小于 最后一个点 隔  t1_point 的距离 那就存前者
             if dist1 < dist2:
                 max_dist = max(max_dist, dist1)
@@ -145,7 +145,7 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
             # 如果 非对应点 比 对应点 的距离还近  必然选择非对应点
             nc_point = t1_point.point_intersect_line(t2.points[nc_point_closed_index],
                                                      t2.points[nc_point_closed_index + 1])
-            if nc_point.get_haversine(t1_point) < corresponding_point.get_haversine(t1_point):
+            if nc_point.distance(t1_point) < corresponding_point.distance(t1_point):
                 line_pre = t2.points[nc_point_closed_index]
                 line_next = t2.points[nc_point_closed_index + 1]
                 corresponding_point = nc_point
@@ -156,8 +156,9 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
                 delta_t = line_pre.distance(corresponding_point) / line_pre.distance(line_next) * (
                         line_next.t - line_pre.t)
                 t1.reference_time.append(line_pre.t + int(delta_t))
-            max_dist = max(t1_point.get_haversine(corresponding_point), max_dist)
+            max_dist = max(t1_point.distance(corresponding_point), max_dist)
     # 3）所有点中最大的距离 即为 return 值
+    print(max_dist)
     return max_dist
 
 

@@ -1,3 +1,4 @@
+import copy
 import time
 
 import pandas as pd
@@ -106,6 +107,7 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
     return linear_eliminate_trajectories
 
 
+# 测试多组epsilon 压缩
 def run():
     # epsilon = 400
     res = []
@@ -171,8 +173,9 @@ def run():
     return res
 
 
+# 测试单个epsilon 压缩
 def run_sample():
-    epsilon = 1000
+    epsilon = 400
     res = []
     average_ped_error = 0
     max_ped_error = 0
@@ -192,7 +195,7 @@ def run_sample():
     # linear_eliminate_trajectories = copy.deepcopy(trajectories)
 
     # 第二部分 聚类压缩
-    group = traj_store_cluster(linear_eliminate_trajectories, 0.25 * epsilon)
+    group = traj_store_cluster(linear_eliminate_trajectories, 0.5 * epsilon/100000.0)
     compress_end_time = time.perf_counter()
     output_compressed_trajectory(linear_eliminate_trajectories)
 
