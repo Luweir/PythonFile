@@ -93,6 +93,7 @@ def new_dp(points: List[Point], start: int, last: int, epsilon: float = 0.2):
             index = i
             d_max = d
         v = points[i].get_speed(points[i - 1])
+        # 注意这里角度 和 速度到底是与前一个点的 还是 与起点的（先用起点）
         a = points[i].get_angle(points[start], points[last])
         if v < seg_speed * (1 - epsilon) or v > seg_speed * (1 + epsilon) or a > 2 * epsilon:
             if d > tol_d_max:

@@ -74,10 +74,10 @@ def get_trajectories(trajectory_type="trajectory"):
 
 def get_berlin_mod_0_005_trajectories(trajectory_type="trajectory"):
     """
-        获得 berlin_mod_0_005 筛选出的 10条相似轨迹
-        :param trajectory_type: trajectory 为 Trajectory 类型；point_list 为 list(points) 类型
-        :return:
-        """
+    获得 berlin_mod_0_005 筛选出的 10条相似轨迹
+    :param trajectory_type: trajectory 为 Trajectory 类型；point_list 为 list(points) 类型
+    :return:
+    """
     path = r'E:\Desktop\Programmer\PythonFile\PythonProject\Experiment\data\BerlinMOD_0_005Data\select_trajectory_'
     trajectories = []
     if trajectory_type == "trajectory":
