@@ -1,9 +1,6 @@
 import time
 
 if __name__ == '__main__':
-    myset = set()
-    myset.add(3)
-    myset.add(1)
-    myset.add(2)
-    myset.add(3)
-    print(3 in myset)
+    l = [[2, 3, 4], 2, 3, 4]
+    l += [1, 2, 3]
+    print(l)

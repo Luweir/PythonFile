@@ -139,7 +139,8 @@ def get_angle_error(point: List[Point], sample: List[Point]) -> list:
             cur_point = point[point_index]
             if cur_point.t != left_point.t:
                 # 计算angle误差
-                angle_error = abs(sample_angle - math.atan2(cur_point.y - left_point.y, cur_point.x - left_point.x))
+                angle_error = abs(
+                    abs(sample_angle) - abs(math.atan2(cur_point.y - left_point.y, cur_point.x - left_point.x)))
                 max_angle_error = max(max_angle_error, angle_error)
                 sum_angle_error += angle_error
             point_index += 1

@@ -9,9 +9,9 @@ from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_
 
 
 def run_sample():
-    epsilon1 = 100.0
-    epsilon2 = 0.265
-    trajectories = get_trajectories("point_list")
+    epsilon1 = 2.25
+    epsilon2 = 0.2
+    trajectories = get_berlin_mod_0_005_trajectories("point_list")
     compressed_trajectories = []
     average_ped_error = 0
     max_ped_error = 0
@@ -55,15 +55,18 @@ def run_sample():
         [epsilon1, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
          max_sed_error, average_speed_error / len(trajectories), max_speed_error,
          average_angle_error / len(trajectories), max_angle_error])
+    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
+                                     '最大角度误差'])
     return res
 
 
 def run():
     # epsilon = 50
     res = []
-    for i in range(1, 40):
-        epsilon = i * 25
-        trajectories = get_trajectories(trajectory_type="point_list")
+    for i in range(50,60):
+        epsilon = 5 * i
+        # 加载数据
+        trajectories = get_berlin_mod_0_005_trajectories(trajectory_type="point_list")
         compressed_trajectories = []
         data = []
         average_ped_error = 0
@@ -98,6 +101,7 @@ def run():
             max_angle_error = max(max_angle_error, h)
             compressed_trajectories += compressed_trajectory
         pd.DataFrame(data).to_csv("mtc_dp_compressed_trajectory.txt", header=0, index=False)
+        print("epsilon:", epsilon)
         print("average_ped_error:", average_ped_error / len(trajectories))
         print("max_ped_error:", max_ped_error)
         print("average_sed_error:", average_sed_error / len(trajectories))
@@ -118,4 +122,4 @@ def run():
 
 
 if __name__ == '__main__':
-    res = run_sample()
+    res = run()

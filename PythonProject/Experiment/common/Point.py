@@ -17,6 +17,7 @@ class Point(object):
         self.y = y
         self.t = t
         self.p = None  # 指向参考点 即另一个 Point
+        self.reference_trajectory = -1
 
     def __repr__(self):
         return "{0:.8f},{1:.8f}".format(self.x, self.y)
@@ -65,7 +66,7 @@ class Point(object):
         :param other:
         :return: 返回两点的欧式距离值
         """
-        return round(math.sqrt(math.pow(self.x - other.x, 2) + math.pow(self.y - other.y, 2)), 5)
+        return math.sqrt(math.pow(self.x - other.x, 2) + math.pow(self.y - other.y, 2))
 
     def point2line_distance(self, start: 'Point', end: 'Point') -> float:
         """
@@ -84,7 +85,7 @@ class Point(object):
 
     def point_intersect_line(self, start: 'Point', end: 'Point') -> 'Point':
         """
-        点与线段的交点  交点在线段上 则返回交点  不在线段上  则返回线段两端距离点最近的点
+        求线段上与 self 点最近的点  交点在线段上 则返回交点 不在线段上 则返回线段两端距离点最近的点
         :param start: 线段起点
         :param end: 线段终点
         :return: 返回交点
@@ -92,9 +93,33 @@ class Point(object):
         x0, y0 = self.x, self.y
         x1, y1 = start.x, start.y
         x2, y2 = end.x, end.y
+        if abs(y1 - y2) < 1e-5:
+            if x0 < min(x1, x2) or x0 > max(x1, x2):
+                dist_start_to_p = self.distance(start)
+                dist_end_to_p = self.distance(end)
+                if dist_start_to_p < dist_end_to_p:
+                    return start
+                else:
+                    return end
+            else:
+                return Point(x=x0, y=y1)
+        if abs(x1 - x2) < 1e-5:
+            if y0 < min(y1, y2) or y0 > max(y1, y2):
+                dist_start_to_p = self.distance(start)
+                dist_end_to_p = self.distance(end)
+                if dist_start_to_p < dist_end_to_p:
+                    return start
+                else:
+                    return end
+            else:
+                return Point(x=x1, y=y0)
         k1 = (y2 - y1) / (x2 - x1)
         b1 = y1 - x1 * k1
-        k0 = 1 / k1
+        # 由 k0 = 1 / k1 改为 k0 = -1 / k1 6/18
+        k0 = -1 / k1
+        if k0 == k1:
+            return start
+        # ----
         b0 = y0 - x0 * k0
         intersect_x = round((b1 - b0) / (k0 - k1), 5)
         if intersect_x > max(x1, x2) or intersect_x < min(x1, x2):
@@ -136,7 +161,7 @@ class Point(object):
 
     def line_intersect_circle(self, r0, lsp: 'Point', esp: 'Point') -> 'Point':
         """
-        计算 圆（圆心self） 与 直接相交的点
+        计算 圆（圆心self） 与 直接相交的点,如果不存在交点，返回左端点
         :param r0: 半径
         :param lsp: 线段左端点
         :param esp: 线段右端点
@@ -202,10 +227,11 @@ class Point(object):
         a = right.y - left.y
         b = left.x - right.x
         c = right.x * left.y - left.x * right.y
+        # 如果left和right 相等 则返回 self 到 left 的距离，即两条直线的距离
         if a == 0 and b == 0:
-            return 0
+            return self.distance(left)
         short_dist = abs((a * self.x + b * self.y + c) / math.sqrt(a * a + b * b))
-        return short_dist if short_dist > 1e-6 else 0
+        return short_dist
 
     def get_sed(self, left: 'Point', right: 'Point') -> float:
         """
@@ -237,8 +263,12 @@ class Point(object):
     def get_angle(self, start, end):
         d = self.get_ped(start, end)
         s = self.distance(start)
+        if s == 0:
+            return 0
         return math.asin(d / s)
 
 
 if __name__ == '__main__':
-    print(Point(38.0322, 116.9649).point2line_distance(Point(38.0946, 116.9519), Point(37.8416, 117.0316)))
+    print(Point(x=13.25324, y=52.508).get_ped(Point(x=13.22934, y=52.50657), Point(x=13.2707, y=52.50913)))
+    print(Point(x=13.25324, y=52.508).point2line_distance(Point(x=13.22934, y=52.50657),
+                                                          Point(x=13.2707, y=52.50913)))

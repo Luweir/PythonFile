@@ -7,8 +7,10 @@ import Experiment.compare.compare as cr
 import pandas as pd
 from Experiment.common.Point import Point
 
-
 # 加载数据集
+from Experiment.data.data_process import get_berlin_mod_0_005_trajectories
+
+
 def gps_reader(filename):
     points = []  # Track points set
     data = pd.read_csv("../data/" + filename, header=None, sep=',').values.tolist()
@@ -145,6 +147,39 @@ def td_tr(points: List[Point], start: int, last: int, epsilon: float) -> list:
     return rec_result
 
 
+def run_single(trajectory, epsilon, compress_type="dp"):
+    res = []
+    if compress_type == "dp":
+        sample_index = douglas_peucker(trajectory, 0, len(trajectory) - 1, epsilon / 100000.0)
+    else:
+        sample_index = new_dp(trajectory, 0, len(trajectory) - 1, epsilon)
+    print(sample_index)
+    compressed_trajectory = []
+    for index in sample_index:
+        compressed_trajectory.append(trajectory[index])
+    [a, b] = cr.get_PED_error(trajectory, compressed_trajectory)
+    [c, d] = cr.get_SED_error(trajectory, compressed_trajectory)
+    [e, f] = cr.get_speed_error(trajectory, compressed_trajectory)
+    [g, h] = cr.get_angle_error(trajectory, compressed_trajectory)
+
+    print("average_ped_error:", a)
+    print("max_ped_error:", b)
+    print("average_sed_error:", c)
+    print("max_sed_error:", d)
+    print("average_speed_error:", e)
+    print("max_speed_error:", f)
+    print("average_angle_error:", g)
+    print("max_angle_error:", h)
+    print("点数：", len(compressed_trajectory))
+    res.append(
+        [epsilon, a, b, c, d, e, f, g, h])
+    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
+                                     '最大角度误差'])
+    return res
+
+
 if __name__ == '__main__':
-    print(math.sin(30 / 180 * math.pi))
-    print(math.asin(1 / 2), "", 30 / 180 * math.pi)
+    trajectories = get_berlin_mod_0_005_trajectories("point_list")
+    run_single(trajectories[0], 10, compress_type="dp")
+    print("--------------------------------------------")
+    run_single(trajectories[0], 0.6, compress_type="new_dp")

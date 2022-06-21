@@ -9,7 +9,7 @@ from Experiment.common.Point import Point
 from Experiment.common.Trajectory import Trajectory
 from Experiment.common.zip import zip_compress
 from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error
-from Experiment.data.data_process import get_trajectories
+from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_trajectories
 
 
 def output_compressed_trajectory(trajectories: List[Trajectory]):
@@ -26,7 +26,7 @@ def output_compressed_trajectory(trajectories: List[Trajectory]):
             if point.p is None:
                 data.append([int(point.t), round(point.x, 4), round(point.y, 4)])
             else:
-                data.append([int(point.t), int(point.p.t)])
+                data.append([int(point.t), point.p.t])
     pd.DataFrame(data).to_csv("mtc_similarity_compressed_trajectory.txt", header=0,
                               index=False)
     print("压缩后总点数：", all_len)
@@ -57,6 +57,8 @@ def get_error(trajectories: List[Trajectory], compressed_trajectories: List[Traj
                 cur_point = cur_point.p
             restore_single_trajectory.append(Point(cur_point.x, cur_point.y, t=trajectory.points[i].t))
         restore_trajectories.append(restore_single_trajectory)
+    # print("restore_trajectories len:", len(restore_trajectories))
+    # print("trajectories len:", len(trajectories))
     for i in range(len(restore_trajectories)):
         [a, b] = get_PED_error(trajectories[i].points, restore_trajectories[i])
         [c, d] = get_SED_error(trajectories[i].points, restore_trajectories[i])
@@ -70,25 +72,26 @@ def get_error(trajectories: List[Trajectory], compressed_trajectories: List[Traj
         max_speed_error = max(max_speed_error, f)
         average_angle_error += g
         max_angle_error = max(max_angle_error, h)
-    return [average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories), max_sed_error,
-            average_speed_error / len(trajectories), max_speed_error, average_angle_error / len(trajectories),
-            max_angle_error]
+    return [average_ped_error, max_ped_error, average_sed_error, max_sed_error,
+            average_speed_error, max_speed_error, average_angle_error, max_angle_error]
 
 
 def run():
-    # epsilon = 50
     res = []
-    for i in range(1, 40):
-        epsilon = 25 * i
-        trajectories = get_trajectories()
+    for i in range(50, 70):
+        epsilon = 5 * i
+        # 加载轨迹
+        trajectories = get_berlin_mod_0_005_trajectories()
         compressed_trajectories = []
         compress_start_time = time.perf_counter()
         for trajectory in trajectories:
             mtc_add(trajectory, compressed_trajectories, epsilon)
         compress_end_time = time.perf_counter()
         output_compressed_trajectory(compressed_trajectories)
-        trajectories = get_trajectories()
+        # 加载轨迹
+        trajectories = get_berlin_mod_0_005_trajectories()
         [a, b, c, d, e, f, g, h] = get_error(trajectories, compressed_trajectories)
+        print("epsilon:", epsilon)
         print("average_ped_error:", a / len(trajectories))
         print("max_ped_error:", b)
         print("average_sed_error:", c / len(trajectories))
@@ -98,7 +101,38 @@ def run():
         print("average_angle_error:", g / len(trajectories))
         print("max_speed_error:", h)
         [m, n] = zip_compress("mtc_similarity_compressed_trajectory.txt")
-        res.append([epsilon, a, b, c, d, e, f, g, h, m, n, (compress_end_time - compress_start_time)])
+        res.append([epsilon, a / len(trajectories), b, c / len(trajectories), d, e / len(trajectories), f,
+                    g / len(trajectories), h, m, n, (compress_end_time - compress_start_time)])
+    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
+                                     '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
+    return res
+
+
+def run_sample():
+    res = []
+    epsilon = 2
+    # 加载轨迹
+    trajectories = get_berlin_mod_0_005_trajectories()
+    compressed_trajectories = []
+    compress_start_time = time.perf_counter()
+    for trajectory in trajectories:
+        mtc_add(trajectory, compressed_trajectories, epsilon)
+    compress_end_time = time.perf_counter()
+    output_compressed_trajectory(compressed_trajectories)
+    # 加载轨迹
+    trajectories = get_berlin_mod_0_005_trajectories()
+    [a, b, c, d, e, f, g, h] = get_error(trajectories, compressed_trajectories)
+    print("epsilon:", epsilon)
+    print("average_ped_error:", a / len(trajectories))
+    print("max_ped_error:", b)
+    print("average_sed_error:", c / len(trajectories))
+    print("max_sed_error:", d)
+    print("average_speed_error:", e / len(trajectories))
+    print("max_speed_error:", f)
+    print("average_angle_error:", g / len(trajectories))
+    print("max_speed_error:", h)
+    [m, n] = zip_compress("mtc_similarity_compressed_trajectory.txt")
+    res.append([epsilon, a, b, c, d, e, f, g, h, m, n, (compress_end_time - compress_start_time)])
     res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
                                      '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
     return res

@@ -6,6 +6,7 @@ import pandas as pd
 from typing import List
 
 from Experiment.TrajStore.src.cluster import traj_store_cluster
+from Experiment.common.Point import Point
 
 from Experiment.common.Trajectory import Trajectory
 from Experiment.common.zip import zip_compress
@@ -30,12 +31,9 @@ def output_compressed_trajectory(trajectories):
         if trajectory.reference_trajectory_id == -1:
             for point in trajectory.points:
                 data.append([int(point.t), round(point.x, 4), round(point.y, 4)])
-        # 有参考轨迹 就只用存时间对
+        # 有参考轨迹 就只用存映射时间
         else:
-            for i in range(len(trajectory.points)):
-                point = trajectory.points[i]
-                data.append([int(point.t), int(trajectory.reference_time[i])])
-                i += 1
+            data += [[ele] for ele in trajectory.reference_time]
     pd.DataFrame(data).to_csv("output_compressed_trajectory.txt", header=False,
                               index=False)
 
@@ -50,27 +48,13 @@ def get_restore_trajectory(compressed_trajectory: Trajectory, hash_map):
     # 无参考轨迹
     if compressed_trajectory.reference_trajectory_id == -1:
         return compressed_trajectory
-    # 有参考轨迹 则进行轨迹恢复   先把参考的点给恢复，然后再进行ped误差计算
+    # 有参考轨迹 则进行轨迹恢复   先把时间映射的点给恢复
     reference_trajectory = hash_map[compressed_trajectory.reference_trajectory_id]
+    restore_points = []
     for i in range(len(compressed_trajectory.reference_time)):
-        match_time = compressed_trajectory.reference_time[i]
-        # 匹配时间超过参考轨迹最大时间 说明是 最后一个点到第一个点之间
-        if match_time > reference_trajectory.points[-1].t:
-            estimation_point = \
-                reference_trajectory.points[-1].get_point_by_time_and_line(match_time, reference_trajectory.points[0])
-            compressed_trajectory.points[i].x = estimation_point.x
-            compressed_trajectory.points[i].y = estimation_point.y
-            continue
-        for j in range(len(reference_trajectory.points) - 1):
-            if reference_trajectory.points[j].t <= match_time <= reference_trajectory.points[j + 1].t:
-                pre_point = reference_trajectory.points[j]
-                next_point = reference_trajectory.points[j + 1]
-                estimation_point = pre_point.get_point_by_time_and_line(match_time, next_point)
-                # 根据映射时间恢复位置
-                compressed_trajectory.points[i].x = estimation_point.x
-                compressed_trajectory.points[i].y = estimation_point.y
-                break
-    return compressed_trajectory
+        restore_points.append(Point(x=reference_trajectory.points[i].x, y=reference_trajectory.points[i].y,
+                                    t=int(compressed_trajectory.reference_time[i])))
+    return Trajectory(compressed_trajectory.trajectory_id, restore_points)
 
 
 def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
@@ -93,8 +77,7 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
             for mid_index in range(first_index + 1, last_index):
                 mid_point = trajectory.points[mid_index]
                 temp_point = mid_point.linear_prediction(first_point, last_point)
-                # print(first_index, last_index, "distance", mid_point.distance(temp_point), ", epsilon", epsilon)
-                if mid_point.distance(temp_point) > epsilon:
+                if mid_point.get_haversine(temp_point) > epsilon:
                     flag = False
                     break
             if not flag or last_index == len(trajectory.points) - 1:
@@ -109,9 +92,8 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
 
 # 测试多组epsilon 压缩
 def run():
-    # epsilon = 400
     res = []
-    for i in range(1, 60):
+    for i in range(1, 150):
         average_ped_error = 0
         max_ped_error = 0
         average_sed_error = 0
@@ -120,18 +102,18 @@ def run():
         max_speed_error = 0
         average_angle_error = 0
         max_angle_error = 0
-        epsilon = 50 * i
+        epsilon = 20 * i
 
         # 测试柏林数据集
         trajectories = get_trajectories()
         compress_start_time = time.perf_counter()
 
-        # 第一部分 线性法消除无关点
-        linear_eliminate_trajectories = linear_eliminate(trajectories, 0.5 * epsilon / 100000.0)
+        # 第一部分 线性法消除无关点   ！！！实验过程中发现 这个线性消除的阈值不能过大 否则多轨迹聚类效果很差
+        linear_eliminate_trajectories = linear_eliminate(trajectories, 0.2 * epsilon)
         # linear_eliminate_trajectories = copy.deepcopy(trajectories)
 
-        # 第二部分 聚类压缩
-        group = traj_store_cluster(linear_eliminate_trajectories, 0.25 * epsilon)
+        # 第二部分 聚类压缩  原理：利用轨迹经过的路径相近而只存非参考轨迹的映射时间
+        group = traj_store_cluster(linear_eliminate_trajectories, 0.4 * epsilon)
         compress_end_time = time.perf_counter()
         output_compressed_trajectory(linear_eliminate_trajectories)
 
@@ -175,7 +157,7 @@ def run():
 
 # 测试单个epsilon 压缩
 def run_sample():
-    epsilon = 400
+    epsilon = 500
     res = []
     average_ped_error = 0
     max_ped_error = 0
@@ -190,12 +172,12 @@ def run_sample():
     trajectories = get_trajectories()
     compress_start_time = time.perf_counter()
 
-    # 第一部分 线性法消除无关点
-    linear_eliminate_trajectories = linear_eliminate(trajectories, 0.5 * epsilon / 100000.0)
+    # 第一部分 线性法消除无关点   ！！！实验过程中发现 这个线性消除的阈值不能过大 否则多轨迹聚类效果很差
+    linear_eliminate_trajectories = linear_eliminate(trajectories, 0.2 * epsilon)
     # linear_eliminate_trajectories = copy.deepcopy(trajectories)
 
-    # 第二部分 聚类压缩
-    group = traj_store_cluster(linear_eliminate_trajectories, 0.5 * epsilon/100000.0)
+    # 第二部分 聚类压缩  原理：利用轨迹经过的路径相近而只存非参考轨迹的映射时间
+    group = traj_store_cluster(linear_eliminate_trajectories, 0.4 * epsilon)
     compress_end_time = time.perf_counter()
     output_compressed_trajectory(linear_eliminate_trajectories)
 
@@ -218,6 +200,7 @@ def run_sample():
         max_speed_error = max(max_speed_error, f)
         average_angle_error += g
         max_angle_error = max(max_angle_error, h)
+        # 加个轨迹的相似度比较
 
     print("average_ped_error:", average_ped_error / len(trajectories))
     print("max_ped_error:", max_ped_error)
@@ -238,5 +221,5 @@ def run_sample():
 
 
 if __name__ == '__main__':
-    # res = run()
     res = run_sample()
+    # res = run_sample()
