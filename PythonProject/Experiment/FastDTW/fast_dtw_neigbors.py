@@ -28,8 +28,8 @@ def get_distance(p1, p2):
 
 def get_fastdtw(traj1, traj2):
     distance, path = fastdtw(traj1, traj2, dist=get_haversine)
+    print(distance)
     return distance
-    # print("" + str(distance / 1000000))  # km
 
 
 if __name__ == '__main__':

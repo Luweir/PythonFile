@@ -100,10 +100,12 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
             # 如果非最佳映射点 隔 t1_point 距离 小于 最后一个点 隔 t1_point 的距离 那就存前者
             if dist1 < dist2:
                 max_dist = max(max_dist, dist1)
-                delta_t = line_pre.get_haversine(nc_point) / line_pre.get_haversine(line_next) * (
-                        line_next.t - line_pre.t)
+                delta_t = 0
+                if line_pre.get_haversine(line_next) > 1e-6:
+                    delta_t = line_pre.get_haversine(nc_point) / line_pre.get_haversine(line_next) * (
+                            line_next.t - line_pre.t)
                 if pattern:
-                    t2.reference_time.append(line_pre.t + int(delta_t))
+                    t2.reference_time.append(line_pre.t + delta_t)
             # 否则就存后者
             else:
                 max_dist = max(max_dist, dist2)
@@ -139,7 +141,7 @@ def traj_dist(t1: Trajectory, t2: Trajectory, pattern=False) -> float:
             if pattern:
                 delta_t = line_pre.get_haversine(corresponding_point) / line_pre.get_haversine(line_next) * (
                         line_next.t - line_pre.t)
-                t2.reference_time.append(line_pre.t + int(delta_t))
+                t2.reference_time.append(line_pre.t + delta_t)
             max_dist = max(t1_point.get_haversine(corresponding_point), max_dist)
     # 3）所有点中最大的距离 即为 return 值
     # print(max_dist)

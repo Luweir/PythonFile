@@ -9,9 +9,10 @@ from Experiment.TrajStore.src.cluster import traj_store_cluster
 from Experiment.common.Point import Point
 
 from Experiment.common.Trajectory import Trajectory
-from Experiment.common.zip import zip_compress
-from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error
-from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_trajectories
+from Experiment.common.zip import zip_compress, zip_decompress
+from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error, get_dtw
+from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_trajectories, get_airline_data, \
+    get_walk_data
 
 
 def output_origin_trajectory(trajectories):
@@ -51,6 +52,7 @@ def get_restore_trajectory(compressed_trajectory: Trajectory, hash_map):
     # 有参考轨迹 则进行轨迹恢复   先把时间映射的点给恢复
     reference_trajectory = hash_map[compressed_trajectory.reference_trajectory_id]
     restore_points = []
+
     for i in range(len(compressed_trajectory.reference_time)):
         restore_points.append(Point(x=reference_trajectory.points[i].x, y=reference_trajectory.points[i].y,
                                     t=int(compressed_trajectory.reference_time[i])))
@@ -93,7 +95,8 @@ def linear_eliminate(trajectories: List[Trajectory], epsilon: float):
 # 测试多组epsilon 压缩
 def run():
     res = []
-    for i in range(1, 150):
+    for i in range(1, 1000):
+        # 指标
         average_ped_error = 0
         max_ped_error = 0
         average_sed_error = 0
@@ -102,18 +105,20 @@ def run():
         max_speed_error = 0
         average_angle_error = 0
         max_angle_error = 0
-        epsilon = 20 * i
+        dtw_distance = 0
+        restore_time = 0
+        epsilon = i * 10
 
-        # 测试柏林数据集
-        trajectories = get_trajectories()
+        # 加载数据集
+        trajectories = get_airline_data()
         compress_start_time = time.perf_counter()
 
-        # 第一部分 线性法消除无关点   ！！！实验过程中发现 这个线性消除的阈值不能过大 否则多轨迹聚类效果很差
-        linear_eliminate_trajectories = linear_eliminate(trajectories, 0.2 * epsilon)
+        # 第一部分 线性法消除无关点   ！！！实验过程中发现 这个线性消除的阈值不能过大 否则多轨迹聚类效果很差 上面0.2下面0.4
+        linear_eliminate_trajectories = linear_eliminate(trajectories, 0.5 * epsilon)
         # linear_eliminate_trajectories = copy.deepcopy(trajectories)
 
         # 第二部分 聚类压缩  原理：利用轨迹经过的路径相近而只存非参考轨迹的映射时间
-        group = traj_store_cluster(linear_eliminate_trajectories, 0.4 * epsilon)
+        group = traj_store_cluster(linear_eliminate_trajectories, 0.25 * epsilon)
         compress_end_time = time.perf_counter()
         output_compressed_trajectory(linear_eliminate_trajectories)
 
@@ -123,7 +128,12 @@ def run():
             if trajectory.reference_trajectory_id == -1:
                 hash_map[trajectory.trajectory_id] = trajectory
         for i in range(len(linear_eliminate_trajectories)):
+            # 恢复数据
+            restore_start_time = time.perf_counter()
             restore_trajectory = get_restore_trajectory(linear_eliminate_trajectories[i], hash_map)
+            restore_end_time = time.perf_counter()
+            restore_time += (restore_end_time - restore_start_time)
+
             [a, b] = get_PED_error(trajectories[i].points, restore_trajectory.points)
             [c, d] = get_SED_error(trajectories[i].points, restore_trajectory.points)
             [e, f] = get_speed_error(trajectories[i].points, restore_trajectory.points)
@@ -136,90 +146,37 @@ def run():
             max_speed_error = max(max_speed_error, f)
             average_angle_error += g
             max_angle_error = max(max_angle_error, h)
+            dtw_distance += get_dtw(trajectories[i].points, restore_trajectory.points)
 
-        print("average_ped_error:", average_ped_error / len(trajectories))
+        average_ped_error /= len(trajectories)
+        average_sed_error /= len(trajectories)
+        average_speed_error /= len(trajectories)
+        average_angle_error /= len(trajectories)
+        dtw_distance /= len(trajectories)
+
+        print("距离阈值:", epsilon)
+        print("average_ped_error:", average_ped_error)
         print("max_ped_error:", max_ped_error)
-        print("average_sed_error:", average_sed_error / len(trajectories))
+        print("average_sed_error:", average_sed_error)
         print("max_sed_error:", max_sed_error)
-        print("average_speed_error:", average_speed_error / len(trajectories))
+        print("average_speed_error:", average_speed_error)
         print("max_speed_error:", max_speed_error)
-        print("average_angle_error:", average_angle_error / len(trajectories))
-        print("max_speed_error:", max_angle_error)
+        print("average_angle_error:", average_angle_error)
+        print("max_angle_error:", max_angle_error)
+        print("average_dtw_distance", dtw_distance)
+        print("压缩时间：", (compress_end_time - compress_start_time))
+        print("restore_time", restore_time)
         [a, b] = zip_compress("output_compressed_trajectory.txt")
+        decompress_time = zip_decompress("output_compressed_trajectory.zip")
+
         res.append(
-            [epsilon, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
-             max_sed_error, average_speed_error / len(trajectories), max_speed_error,
-             average_angle_error / len(trajectories), max_angle_error, a, b, (compress_end_time - compress_start_time)])
+            [epsilon, average_ped_error, max_ped_error, average_sed_error, max_sed_error,
+             average_speed_error, max_speed_error, average_angle_error, max_angle_error, dtw_distance,
+             a, b, (compress_end_time - compress_start_time), decompress_time, restore_time])
     res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
-                                     '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
-    return res
-
-
-# 测试单个epsilon 压缩
-def run_sample():
-    epsilon = 500
-    res = []
-    average_ped_error = 0
-    max_ped_error = 0
-    average_sed_error = 0
-    max_sed_error = 0
-    average_speed_error = 0
-    max_speed_error = 0
-    average_angle_error = 0
-    max_angle_error = 0
-
-    # 测试柏林数据集
-    trajectories = get_trajectories()
-    compress_start_time = time.perf_counter()
-
-    # 第一部分 线性法消除无关点   ！！！实验过程中发现 这个线性消除的阈值不能过大 否则多轨迹聚类效果很差
-    linear_eliminate_trajectories = linear_eliminate(trajectories, 0.2 * epsilon)
-    # linear_eliminate_trajectories = copy.deepcopy(trajectories)
-
-    # 第二部分 聚类压缩  原理：利用轨迹经过的路径相近而只存非参考轨迹的映射时间
-    group = traj_store_cluster(linear_eliminate_trajectories, 0.4 * epsilon)
-    compress_end_time = time.perf_counter()
-    output_compressed_trajectory(linear_eliminate_trajectories)
-
-    # 第三部分 轨迹恢复和误差测量
-    hash_map = {}
-    for trajectory in linear_eliminate_trajectories:
-        if trajectory.reference_trajectory_id == -1:
-            hash_map[trajectory.trajectory_id] = trajectory
-    for i in range(len(linear_eliminate_trajectories)):
-        restore_trajectory = get_restore_trajectory(linear_eliminate_trajectories[i], hash_map)
-        [a, b] = get_PED_error(trajectories[i].points, restore_trajectory.points)
-        [c, d] = get_SED_error(trajectories[i].points, restore_trajectory.points)
-        [e, f] = get_speed_error(trajectories[i].points, restore_trajectory.points)
-        [g, h] = get_angle_error(trajectories[i].points, restore_trajectory.points)
-        average_ped_error += a
-        max_ped_error = max(max_ped_error, b)
-        average_sed_error += c
-        max_sed_error = max(max_sed_error, d)
-        average_speed_error += e
-        max_speed_error = max(max_speed_error, f)
-        average_angle_error += g
-        max_angle_error = max(max_angle_error, h)
-        # 加个轨迹的相似度比较
-
-    print("average_ped_error:", average_ped_error / len(trajectories))
-    print("max_ped_error:", max_ped_error)
-    print("average_sed_error:", average_sed_error / len(trajectories))
-    print("max_sed_error:", max_sed_error)
-    print("average_speed_error:", average_speed_error / len(trajectories))
-    print("max_speed_error:", max_speed_error)
-    print("average_angle_error:", average_angle_error / len(trajectories))
-    print("max_speed_error:", max_angle_error)
-    [a, b] = zip_compress("output_compressed_trajectory.txt")
-    res.append(
-        [epsilon, average_ped_error / len(trajectories), max_ped_error, average_sed_error / len(trajectories),
-         max_sed_error, average_speed_error / len(trajectories), max_speed_error,
-         average_angle_error / len(trajectories), max_angle_error, a, b, (compress_end_time - compress_start_time)])
-    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
-                                     '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
+                                     '最大角度误差', '平均dtw距离', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)', '解压时间(s)', '恢复时间(s)'])
     return res
 
 
 if __name__ == '__main__':
-    res = run_sample()
-    # res = run_sample()
+    res = run()

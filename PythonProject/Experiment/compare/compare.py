@@ -3,6 +3,8 @@ from typing import List
 import pandas as pd
 import math
 import numpy as np
+from fastdtw import fastdtw
+
 import Experiment.FastDTW.fast_dtw_neigbors as dtw
 import Experiment.Threshold.threshold as threshold
 from Experiment.common.Point import Point
@@ -154,8 +156,31 @@ def get_angle_error(point: List[Point], sample: List[Point]) -> list:
     return [sum_angle_error / len(point), max_angle_error]
 
 
+def get_haversine(point_a, point_b):
+    EARTH_RADIUS = 6371229  # m 用于两点间距离计算
+    lat1 = point_a[1] * math.pi / 180
+    lat2 = point_b[1] * math.pi / 180
+    lon1 = point_a[2] * math.pi / 180
+    lon2 = point_b[2] * math.pi / 180
+    d_lat = lat2 - lat1
+    d_lon = lon2 - lon1
+    a_a = math.sin(d_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(d_lon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a_a), math.sqrt(1 - a_a))
+    return EARTH_RADIUS * c
+
+
 def get_dtw(point: List[Point], sample: List[Point]):
-    # traj1 = np.array(point)
-    # traj2 = np.array(sample)
-    # return dtw.get_fastdtw(traj1, traj2)
-    ...
+    t1 = []
+    t2 = []
+    for ele in point:
+        t1.append(ele.to_list())
+    for ele in sample:
+        t2.append(ele.to_list())
+    distance, path = fastdtw(t1, t2, dist=get_haversine)
+    return distance / 1000.0
+
+
+if __name__ == '__main__':
+    a = [Point(x=1.1, y=2.1, t=0), Point(x=1.5, y=2.1, t=2)]
+    b = [Point(x=1.1, y=2.1, t=0), Point(x=1.3, y=2.1, t=1), Point(x=1.5, y=2.1, t=2)]
+    print(get_dtw(a, b))

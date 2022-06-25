@@ -7,9 +7,10 @@ from typing import List
 from Experiment.Similarity_based_MTC.similarity_based.mtc import mtc_add
 from Experiment.common.Point import Point
 from Experiment.common.Trajectory import Trajectory
-from Experiment.common.zip import zip_compress
-from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error
-from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_trajectories
+from Experiment.common.zip import zip_compress, zip_decompress
+from Experiment.compare.compare import get_PED_error, get_SED_error, get_speed_error, get_angle_error, get_dtw
+from Experiment.data.data_process import get_trajectories, get_berlin_mod_0_005_trajectories, get_walk_data, \
+    get_airline_data
 
 
 def output_compressed_trajectory(trajectories: List[Trajectory]):
@@ -23,10 +24,15 @@ def output_compressed_trajectory(trajectories: List[Trajectory]):
     for trajectory in trajectories:
         all_len += len(trajectory.points)
         for point in trajectory.points:
+            refer_point = point
+            while refer_point.p is not None:
+                refer_point = refer_point.p
             if point.p is None:
                 data.append([int(point.t), round(point.x, 4), round(point.y, 4)])
             else:
-                data.append([int(point.t), point.p.t])
+                # 映射的时间 保留两位
+                # data.append([int(point.t), round(refer_point.t, 2)])
+                data.append([int(point.t), int(refer_point.t)])
     pd.DataFrame(data).to_csv("mtc_similarity_compressed_trajectory.txt", header=0,
                               index=False)
     print("压缩后总点数：", all_len)
@@ -48,17 +54,29 @@ def get_error(trajectories: List[Trajectory], compressed_trajectories: List[Traj
     max_speed_error = 0
     average_angle_error = 0
     max_angle_error = 0
+    average_dtw_distance = 0
+    start_restore_time = time.perf_counter()
     restore_trajectories = []
     for trajectory in compressed_trajectories:
         restore_single_trajectory = []
+        reference_trajectory = None
+        if trajectory.reference_trajectory_id != -1:
+            reference_trajectory = trajectories[trajectory.reference_trajectory_id]
         for i in range(len(trajectory.points)):
             cur_point = trajectory.points[i]
+            # 有参考点 根据参考轨迹找到该时间对应的参考位置
+            if cur_point.p is not None:
+                for j in range(len(reference_trajectory.points) - 1):
+                    if reference_trajectory.points[j].t <= cur_point.p.t <= reference_trajectory.points[j + 1].t:
+                        real_point = cur_point.p.linear_prediction(reference_trajectory.points[j],
+                                                                   reference_trajectory.points[j + 1])
+                        break
             while cur_point.p is not None:
                 cur_point = cur_point.p
             restore_single_trajectory.append(Point(cur_point.x, cur_point.y, t=trajectory.points[i].t))
         restore_trajectories.append(restore_single_trajectory)
-    # print("restore_trajectories len:", len(restore_trajectories))
-    # print("trajectories len:", len(trajectories))
+    end_restore_time = time.perf_counter()
+
     for i in range(len(restore_trajectories)):
         [a, b] = get_PED_error(trajectories[i].points, restore_trajectories[i])
         [c, d] = get_SED_error(trajectories[i].points, restore_trajectories[i])
@@ -72,16 +90,20 @@ def get_error(trajectories: List[Trajectory], compressed_trajectories: List[Traj
         max_speed_error = max(max_speed_error, f)
         average_angle_error += g
         max_angle_error = max(max_angle_error, h)
+        average_dtw_distance += get_dtw(trajectories[i].points, restore_trajectories[i])
+    restore_time = end_restore_time - start_restore_time
+
     return [average_ped_error, max_ped_error, average_sed_error, max_sed_error,
-            average_speed_error, max_speed_error, average_angle_error, max_angle_error]
+            average_speed_error, max_speed_error, average_angle_error, max_angle_error, average_dtw_distance,
+            restore_time]
 
 
 def run():
     res = []
-    for i in range(50, 70):
+    for i in range(1, 100):
         epsilon = 5 * i
         # 加载轨迹
-        trajectories = get_berlin_mod_0_005_trajectories()
+        trajectories = get_airline_data()
         compressed_trajectories = []
         compress_start_time = time.perf_counter()
         for trajectory in trajectories:
@@ -89,52 +111,34 @@ def run():
         compress_end_time = time.perf_counter()
         output_compressed_trajectory(compressed_trajectories)
         # 加载轨迹
-        trajectories = get_berlin_mod_0_005_trajectories()
-        [a, b, c, d, e, f, g, h] = get_error(trajectories, compressed_trajectories)
+        trajectories = get_airline_data()
+        [a, b, c, d, e, f, g, h, k, l] = get_error(trajectories, compressed_trajectories)
+        a /= len(trajectories)
+        c /= len(trajectories)
+        e /= len(trajectories)
+        g /= len(trajectories)
+        k /= len(trajectories)
+
         print("epsilon:", epsilon)
-        print("average_ped_error:", a / len(trajectories))
+        print("average_ped_error:", a)
         print("max_ped_error:", b)
-        print("average_sed_error:", c / len(trajectories))
+        print("average_sed_error:", c)
         print("max_sed_error:", d)
-        print("average_speed_error:", e / len(trajectories))
+        print("average_speed_error:", e)
         print("max_speed_error:", f)
-        print("average_angle_error:", g / len(trajectories))
+        print("average_angle_error:", g)
         print("max_speed_error:", h)
+        print("average_dtw_distance", k)
+        print("压缩时间：", (compress_end_time - compress_start_time))
         [m, n] = zip_compress("mtc_similarity_compressed_trajectory.txt")
-        res.append([epsilon, a / len(trajectories), b, c / len(trajectories), d, e / len(trajectories), f,
-                    g / len(trajectories), h, m, n, (compress_end_time - compress_start_time)])
-    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
-                                     '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
-    return res
+        decompress_time = zip_decompress("mtc_similarity_compressed_trajectory.zip")
 
-
-def run_sample():
-    res = []
-    epsilon = 2
-    # 加载轨迹
-    trajectories = get_berlin_mod_0_005_trajectories()
-    compressed_trajectories = []
-    compress_start_time = time.perf_counter()
-    for trajectory in trajectories:
-        mtc_add(trajectory, compressed_trajectories, epsilon)
-    compress_end_time = time.perf_counter()
-    output_compressed_trajectory(compressed_trajectories)
-    # 加载轨迹
-    trajectories = get_berlin_mod_0_005_trajectories()
-    [a, b, c, d, e, f, g, h] = get_error(trajectories, compressed_trajectories)
-    print("epsilon:", epsilon)
-    print("average_ped_error:", a / len(trajectories))
-    print("max_ped_error:", b)
-    print("average_sed_error:", c / len(trajectories))
-    print("max_sed_error:", d)
-    print("average_speed_error:", e / len(trajectories))
-    print("max_speed_error:", f)
-    print("average_angle_error:", g / len(trajectories))
-    print("max_speed_error:", h)
-    [m, n] = zip_compress("mtc_similarity_compressed_trajectory.txt")
-    res.append([epsilon, a, b, c, d, e, f, g, h, m, n, (compress_end_time - compress_start_time)])
-    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差', '平均速度误差', '最大速度误差', '平均角度误差',
-                                     '最大角度误差', '压缩后文件大小', 'zip后文件大小', '压缩时间(s)'])
+        res.append([epsilon, a, b, c, d,
+                    e, f, g, h, k,
+                    m, n, (compress_end_time - compress_start_time), decompress_time, l])
+    res = pd.DataFrame(res, columns=['误差阈值', '平均ped误差', '最大ped误差', '平均sed误差', '最大sed误差',
+                                     '平均速度误差', '最大速度误差', '平均角度误差', '最大角度误差', '平均dtw距离',
+                                     '压缩后文件大小', 'zip后文件大小', '压缩时间(s)', '解压时间(s)', '恢复时间(s)'])
     return res
 
 

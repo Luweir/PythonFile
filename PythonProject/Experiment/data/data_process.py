@@ -92,5 +92,48 @@ def get_berlin_mod_0_005_trajectories(trajectory_type="trajectory"):
     return trajectories
 
 
+def get_walk_data(trajectory_type="trajectory"):
+    """
+    获得 自己采集的行走 轨迹
+    :param trajectory_type: trajectory 为 Trajectory 类型；point_list 为 list(points) 类型
+    :return:
+    """
+    path = r'E:\Desktop\Programmer\PythonFile\PythonProject\Experiment\data\WalkingData'
+    filenames = ["5-31-1", "5-31-2", "6-1-1", "6-1-2", "6-2-1", "6-2-2", "6-3-1", "6-3-2", "6-4-2"]
+    trajectories = []
+    if trajectory_type == "trajectory":
+        for i in range(len(filenames)):
+            trajectories.append(Trajectory(i, load_trajectory(
+                pd.read_csv(path + "\\" + filenames[i] + '.txt', header=None, sep='\t'))))
+        return trajectories
+    if trajectory_type == "point_list":
+        for i in range(len(filenames)):
+            trajectories.append(load_trajectory(
+                pd.read_csv(path + "\\" + filenames[i] + '.txt', header=None, sep='\t')))
+    return trajectories
+
+
+def get_airline_data(trajectory_type="trajectory"):
+    """
+    获得 飞机航线 轨迹
+    :param trajectory_type: trajectory 为 Trajectory 类型；point_list 为 list(points) 类型
+    :return:
+    """
+    path = r'E:\Desktop\Programmer\PythonFile\PythonProject\Experiment\data\AirlineData'
+    trajectories = []
+    trajectory_id = 0
+    if trajectory_type == "trajectory":
+        for i in range(9, 26):
+            trajectories.append(Trajectory(trajectory_id, load_trajectory(
+                pd.read_csv(path + "\\10." + str(i) + '.txt', header=None, sep='\t'))))
+            trajectory_id += 1
+        return trajectories
+    if trajectory_type == "point_list":
+        for i in range(9, 26):
+            trajectories.append(load_trajectory(
+                pd.read_csv(path + "\\10." + str(i) + '.txt', header=None, sep='\t')))
+    return trajectories
+
+
 if __name__ == '__main__':
-    trajectories = get_berlin_mod_0_005_trajectories()
+    trajectories = get_airline_data()

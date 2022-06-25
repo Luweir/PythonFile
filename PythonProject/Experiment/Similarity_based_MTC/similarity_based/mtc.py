@@ -138,7 +138,7 @@ def find_match_point(t_point: Point, r_points: List[Point], miu) -> Point:
         while line_next.p is not None:
             line_next = line_next.p
         nc_point = t_point.point_intersect_line(line_pre, line_next)
-        cur_dist = t_point.get_haversine(r_points[index])
+        cur_dist = t_point.get_haversine(nc_point)
         if cur_dist < min_error:
             min_error = cur_dist
             best_index = index
@@ -158,4 +158,9 @@ def find_match_point(t_point: Point, r_points: List[Point], miu) -> Point:
     if line_pre.distance(line_next) > 1e-6:
         delta_t = line_pre.distance(corresponding_point) / line_pre.distance(line_next) * (
                 r_points[best_index + 1].t - r_points[best_index].t)
+        # 映射到的时间 保留两位
+        # delta_t = round(delta_t, 2)
+        # corresponding_point = Point(x=-1, y=-1, t=r_points[best_index].t + delta_t).linear_prediction(line_pre,
+        #                                                                                               line_next)
     return Point(corresponding_point.x, corresponding_point.y, t=r_points[best_index].t + delta_t)
+    # return corresponding_point

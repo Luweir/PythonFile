@@ -55,7 +55,7 @@ class Point(object):
         return self.x * other.x + self.y * other.y
 
     def to_list(self):
-        return [self.t, self.x, self.y]
+        return [int(self.t), self.x, self.y]
 
     def as_array(self):
         return np.array((self.x, self.y))
